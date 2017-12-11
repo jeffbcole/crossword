@@ -7,8 +7,8 @@
 	<meta name="description" content="Play a crossword puzzle or create your own.">
 	<meta name="author" content="Jeff Cole">
 
-    <link rel="stylesheet" href="menus.css">
-    
+    <link rel="stylesheet" href="puzzle.css">
+
 	<script>
 		//
 		// Initialize
@@ -23,6 +23,57 @@
 
 <body>
 
+    <article class="PuzzleLayout">
+        
+        <section class="BoardAndClueBar">
+            <div class="ClueBar">
+                <div class="ClueBarNumber">1A</div>
+                <div class="ClueBarText">This is a clue</div>
+            </div>
+            <svg class="Board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 501.00 501.00">
+                <g data-group="BoardCells">
+                    <g>
+                        <rect class="Cell" x="3.0" y="3.0" width="33.0" height="33.0" fill="none"></rect>
+                        <text x="5.0" y="14.5" text-anchor="start" font-size="11.0">1</text>
+                        <text x="19.5" y="33.25" text-anchor="middle" font-size="22.0">A</text>
+                    </g>
+                </g>
+                <g data-group="BoardGrid">
+                    <path d="M3.00,36.00 l495.00,0.00 M3.00,69.00 l495.00,0.00 M3.00,102.00 l495.00,0.00 M3.00,135.00 l495.00,0.00 M3.00,168.00 l495.00,0.00 M3.00,201.00 l495.00,0.00 M3.00,234.00 l495.00,0.00 M3.00,267.00 l495.00,0.00 M3.00,300.00 l495.00,0.00 M3.00,333.00 l495.00,0.00 M3.00,366.00 l495.00,0.00 M3.00,399.00 l495.00,0.00 M3.00,432.00 l495.00,0.00 M3.00,465.00 l495.00,0.00 M36.00,3.00 l0.00,495.00 M69.00,3.00 l0.00,495.00 M102.00,3.00 l0.00,495.00 M135.00,3.00 l0.00,495.00 M168.00,3.00 l0.00,495.00 M201.00,3.00 l0.00,495.00 M234.00,3.00 l0.00,495.00 M267.00,3.00 l0.00,495.00 M300.00,3.00 l0.00,495.00 M333.00,3.00 l0.00,495.00 M366.00,3.00 l0.00,495.00 M399.00,3.00 l0.00,495.00 M432.00,3.00 l0.00,495.00 M465.00,3.00 l0.00,495.00" fill="none" vector-effect="non-scaling-stroke" stroke="dimgray"></path>
+                    <rect x="1.50" y="1.50" width="498.00" height="498.00" fill="none" stroke-width="3.00" stroke="black"></rect>
+                </g>
+            </svg>
+        </section>
+
+        <section class="CluesLayout">
+            <div class="ClueList">
+                <h3 class="ClueTitle">Across</h3>
+                <ol class="ClueListList">
+                    <li class="ClueLI">
+                        <span class="ClueLabel">1</span>
+                        <span class="ClueText">This is a clue text here.</span>
+                    </li>
+                </ol>
+            </div>
+            <div class="ClueList">
+                <h3 class="ClueTitle">Down</h3>
+                <ol class="ClueListList">
+                    <li class="ClueLI">
+                        <span class="ClueLabel">1</span>
+                        <span class="ClueText">Clue one</span>
+                    </li>
+                    <li class="ClueLI">
+                        <span class="ClueLabel">1</span>
+                        <span class="ClueText">This is a clue text here with many letters</span>
+                    </li>
+                    <li class="ClueLI">
+                        <span class="ClueLabel">1</span>
+                        <span class="ClueText">This is a clue text</span>
+                    </li>
+                </ol>
+            </div>
+        </section>
+    </article>
 </body>
 
 </html>
