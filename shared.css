@@ -1,0 +1,54 @@
+.TitleInfo {
+    width: 100%;
+    min-height: 50px;
+    white-space: nowrap;
+}
+
+.Title {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18pt;
+    text-align: center;
+    border: none;
+    width: 100%;
+    text-align: center;
+}
+
+.PuzzleLayout {
+    -webkit-box-align: start;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+    height: 100vh;
+    max-height: 660px;
+    -webkit-justify-content: space-around;
+    -ms-flex-pack: distribute;
+    justify-content: space-around;
+    margin: auto;
+    max-width: 1132px;
+    padding: 10px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    font-family: arial,sans-serif;
+}
+
+.BoardAndClueBar {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    width: 100%;
+}
+
+#Board {
+    display: block;
+    font-family: arial,sans-serif;
+    margin: 1px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    width: 100%;
+}

@@ -2,12 +2,13 @@
 <html lang="en">
 
 <head>
-	<title>Crossword Puzzler</title>
+	<title>Crossword Solver</title>
 	<meta charset="utf-8">
 	<meta name="description" content="Play a crossword puzzle or create your own.">
 	<meta name="author" content="Jeff Cole">
 
-    <link rel="stylesheet" href="puzzle.css">
+    <link rel="stylesheet" href="solver.css">
+    <link rel="stylesheet" href="shared.css">
 
 	<script>
 		window.onload = function () {
@@ -15,13 +16,13 @@
 		};
 	</script>
 
-    <script type="text/javascript" src="puzzle.js"></script>
+    <script type="text/javascript" src="solver.js"></script>
 </head>
 
 <body>
 
     <div class="TitleInfo">
-        <input class="Title" id="Title" type="text" value="Title" onchange="OnTitleChanged()">
+        <div class="Title" id="Title"></div>
     </div>  
     
     <article class="PuzzleLayout">
@@ -29,7 +30,7 @@
         <section class="BoardAndClueBar">
             <div class="ClueBar">
                 <div id="ClueBarNumber"></div>
-                <textarea type="text" id="ClueBarText"></textarea>
+                <div id="ClueBarText"></div>
             </div>
             <svg id="Board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 501.00 501.00" onmousedown="OnBoardClick(evt)">
                 <g id="BoardCells">
@@ -72,18 +73,6 @@
                         <span class="ClueText">This is a clue text</span>
                     </li>
                 </ol>
-            </div>
-
-            <div id="EditToolsLayout">
-                <center>
-                    <h4 id="EditToolsLayoutTitle">Edit Tools</h4>
-                </center>
-                <div id="SuggestedWordsList">
-                    <h3 class="ClueTitle" id="SuggestWordsTitle">Known Answers</h3>
-                    <ol id="SuggestedAnswerList" class="ClueListList">
-
-                    </ol>
-                </div>
             </div>
         </section>
     </article>

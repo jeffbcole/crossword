@@ -1,28 +1,18 @@
 var puzzle = {};
 
 var isSelectingAcrossClues = true;
-var isSymetrical = true;
 
 var boardBorder;
 
 function Initialize() {
 
-    document.getElementById('Title').addEventListener("input", OnTitleChanged);
-    document.getElementById('Title').value = "";
-    
-    document.getElementById('ClueBarText').addEventListener("input", OnClueBarTextChanged);
-    document.getElementById('ClueBarText').value = "";
-
-    document.getElementById('Board').oncontextmenu = function(e) { return false; };
-
-    // Detect when user is typing
-    MakeFocusDetectable(document.getElementById('ClueBarText'));
-    MakeFocusDetectable(document.getElementById('Title'));
+    document.getElementById('Title').innerHTML = "Puzzle Title";
+    document.getElementById('ClueBarText').innerHTML = "";
 
     MakeTextAreaAutoSizeHeight(document.getElementById('ClueBarText'), 200);
 
     // Load saved puzzle if it exists
-    var savedPuzzleString = window.localStorage.getItem('SavePuzzle');
+    var savedPuzzleString = window.localStorage.getItem('CurrentSolverPuzzle');
     if (savedPuzzleString) {
         var savedPuzzle = JSON.parse(savedPuzzleString);
         InitializeBoardForPuzzle(savedPuzzle);
@@ -31,51 +21,6 @@ function Initialize() {
     }
     
     document.onkeydown = checkKey;
-
-    var xhttp = new XMLHttpRequest();
-    xhttp.responseType = "text";
-    xhttp.onreadystatechange = function() {
-      if (this.readyState == 4 && this.status == 200) {
-        CreateWordsLookupTable(this.responseText);
-      }
-    };
-    xhttp.open("GET", "data/words_all.txt", true);
-    xhttp.send();
-}
-
-var wordsByLength = [];
-function CreateWordsLookupTable(allwordsText) {
-    var allWords = allwordsText.split("\r\n");
-    for (var i=0; i<allWords.length; i++) {
-        var word = allWords[i];
-        if (wordsByLength[word.length] === undefined) {
-            wordsByLength[word.length] = [];
-        }
-        wordsByLength[word.length].push(word);
-    }
-}
-
-var textEntryIsFocused = false;
-
-function MakeFocusDetectable(element) {
-    element.onfocus = function() {
-        textEntryIsFocused = true;
-    }
-    element.onblur = function() {
-        textEntryIsFocused = false;
-    }
-}
-
-function MakeClueFocusDetectable(element) {
-    element.onfocus = function() {
-        var startCell = element.clue.startCell;
-        isSelectingAcrossClues = element.clue.isAcross;
-        SelectCell(element.clue.startCell);
-        textEntryIsFocused = true;
-    }
-    element.onblur = function() {
-        textEntryIsFocused = false;
-    }
 }
 
 function MakeTextAreaAutoSizeHeight(element, maxSize) {
@@ -83,44 +28,6 @@ function MakeTextAreaAutoSizeHeight(element, maxSize) {
         element.style.height = "";
         element.style.height = Math.min(element.scrollHeight, maxSize) + "px";
       };
-}
-
-function OnTitleChanged() {
-    var el = document.getElementById('Title');
-    var curTitle = el.value;
-    puzzle.title = curTitle;
-    SavePuzzle();
-}
-
-function OnClueBarTextChanged() {
-    if (currentSelectedCell != null) {
-        var barText = document.getElementById('ClueBarText').value;
-        if (isSelectingAcrossClues) {
-            currentSelectedCell.acrossClue.text = barText;
-            currentSelectedCell.acrossClue.clueView.children[1].value = barText;
-        } else {
-            currentSelectedCell.downClue.text = barText;
-            currentSelectedCell.downClue.clueView.children[1].value = barText;
-        }
-    }
-    SavePuzzle();
-}
-
-function OnClueListItemTextChanged(ev) {
-    ev.target.clue.text = ev.target.value;
-    SavePuzzle();
-    if (currentSelectedCell === null) {
-        return;
-    }
-    if (ev.target.clue.isAcross) {
-        if (isSelectingAcrossClues && currentSelectedCell.acrossClue === ev.target.clue) {
-            document.getElementById('ClueBarText').value = ev.target.value;
-        }
-    } else {
-        if (!isSelectingAcrossClues && currentSelectedCell.downClue === ev.target.clue) {
-            document.getElementById('ClueBarText').value = ev.target.value;
-        }
-    }
 }
 
 function InitializeBoardForPuzzle(savedPuzzle) {
@@ -133,7 +40,7 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     puzzle.rows = savedPuzzle ? savedPuzzle.rows : 21;
     puzzle.columns = savedPuzzle ? savedPuzzle.columns : 21;
 
-    document.getElementById('Title').value = puzzle.title;
+    document.getElementById('Title').innerHTML = puzzle.title;
     
     var cellsContainer = document.getElementById('BoardCells')
     cellsContainer.innerHTML = "";
@@ -270,55 +177,8 @@ function OnBoardClick(evt) {
     row = Math.min(Math.max(row, 0), puzzle.rows-1);
     var cell = puzzle.cells[row][column];
 
-    var isRightButton = false;
-    if ("which" in evt) {
-        isRightButton = evt.which === 3;
-    } else if ("button" in evt) {
-        // IE and Opera
-        isRightButton = evt.button === 2;
-    }
-
-    if (isRightButton) {
-        if (cell.isBlack) {
-            cell.isBlack = false;
-            cell.cellView.children[0].setAttribute("fill", "none");
-        } else {
-            cell.isBlack = true;
-            cell.cellView.children[0].setAttribute("fill", "black");
-        }
-        if (isSymetrical) {
-            var oppRow = puzzle.rows - 1 - row;
-            var oppCol = puzzle.columns - 1 - column;
-            if (!(oppRow === row && oppCol === column)) {
-                cell = puzzle.cells[oppRow][oppCol];
-                if (cell.isBlack) {
-                    cell.isBlack = false;
-                    cell.cellView.children[0].setAttribute("fill", "none");
-                } else {
-                    cell.isBlack = true;
-                    cell.cellView.children[0].setAttribute("fill", "black");
-                }
-            }
-        }
-        GenerateCluesAndCellNumbers(null);
-        SavePuzzle();
-
-        // Indicate if the layout is valid
-        var fastGrid = GetFastGrid(puzzle);
-        var [isValid, wordCount, avgLength] = GetFastGridStats(fastGrid);
-        if (isValid) {
-            boardBorder.setAttribute('stroke' , 'black');
-        } else {
-            boardBorder.setAttribute('stroke' , 'red');
-
-        }
-
-        ShowCluesWithNoKnownSolution();
-
-    } else {
-        if (!cell.isBlack) {
-            SelectCell(cell);
-        }
+    if (!cell.isBlack) {
+        SelectCell(cell);
     }
 }
 
@@ -460,17 +320,17 @@ function AddClue(isAcross, number, text, startCell, answerLength) {
     
     var clueContainer = document.createElement("li");
     clueContainer.className = "ClueLI";
+    clueContainer.clue = clue;
+    clueContainer.onclick = OnClueClicked;
     var clueNumber = document.createElement("span");
     clueNumber.className = "ClueLabel";
     clueNumber.innerHTML = number;
+    clueNumber.clue = clue;
     clueContainer.appendChild(clueNumber);
-    var clueText = document.createElement("textarea");
+    var clueText = document.createElement("div");
     clueText.className = "ClueText";
-    clueText.type = "text";
-    clueText.value = text;
+    clueText.innerHTML = text;
     clueText.clue = clue;
-    clueText.addEventListener("input", OnClueListItemTextChanged)
-    MakeClueFocusDetectable(clueText);
     MakeTextAreaAutoSizeHeight(clueText, 300);
     clueContainer.appendChild(clueText);
     clue.clueView = clueContainer;
@@ -486,6 +346,15 @@ function AddClue(isAcross, number, text, startCell, answerLength) {
     return clue;
 }
 
+function OnClueClicked(element) {
+    if (element.target.clue.isAcross) {
+        isSelectingAcrossClues = true;
+    } else {
+        isSelectingAcrossClues = false;
+    }
+    SelectCell(element.target.clue.startCell);
+}
+
 var currentSelectedCell = null;
 var currentHighlightedCells = [];
 
@@ -496,7 +365,7 @@ function SelectCell(cell) {
         currentSelectedCell.acrossClue.clueView.style.borderLeftColor = 'transparent';
         currentSelectedCell.downClue.clueView.style.background = 'none';
         currentSelectedCell.downClue.clueView.style.borderLeftColor = 'transparent';
-        document.getElementById('ClueBarText').value = "";
+        document.getElementById('ClueBarText').innerHTML = "";
         for (var i=0; i<currentHighlightedCells.length; i++) {
             currentHighlightedCells[i].cellView.children[0].setAttribute("fill", "transparent");
         }
@@ -513,7 +382,7 @@ function SelectCell(cell) {
         currentSelectedCell.acrossClue.clueView.style.background = '#a7d8ff';
         currentSelectedCell.downClue.clueView.style.borderLeftColor = '#a7d8ff';
         document.getElementById('ClueBarNumber').innerHTML = currentSelectedCell.acrossClue.number + "A";
-        document.getElementById('ClueBarText').value = currentSelectedCell.acrossClue.text;
+        document.getElementById('ClueBarText').innerHTML = currentSelectedCell.acrossClue.text;
     
         ScrollToViewClue(currentSelectedCell.acrossClue);
         ScrollToViewClue(currentSelectedCell.downClue);
@@ -534,7 +403,7 @@ function SelectCell(cell) {
         currentSelectedCell.acrossClue.clueView.style.borderLeftColor = '#a7d8ff';
         currentSelectedCell.downClue.clueView.style.background = '#a7d8ff';
         document.getElementById('ClueBarNumber').innerHTML = currentSelectedCell.downClue.number + "D";
-        document.getElementById('ClueBarText').value = currentSelectedCell.downClue.text;
+        document.getElementById('ClueBarText').innerHTML = currentSelectedCell.downClue.text;
 
         ScrollToViewClue(currentSelectedCell.downClue);
         ScrollToViewClue(currentSelectedCell.acrossClue);
@@ -552,8 +421,6 @@ function SelectCell(cell) {
             curRow++;
         }
     }
-
-    SuggestLettersForCurrentSelectedClue();
 }
 
 function SelectNextCell() {
@@ -712,135 +579,131 @@ function checkKey(e) {
         return;
     }
 
-    if (!textEntryIsFocused) {
-        // Handle Arrow Keys
-        var curRow = currentSelectedCell.row;
-        var curColumn = currentSelectedCell.column;
-        if (e.keyCode == '38') {
-            // up arrow
-            if (isSelectingAcrossClues) {
-                isSelectingAcrossClues = false;
-            }
-            else if (curRow <= 0) {
-                return;
-            }
-            else if (!puzzle.cells[curRow-1][curColumn].isBlack) {
-                curRow--;
-            } else {
-                var skip = curRow;
-                while (true) {
-                    skip--;
-                    if (skip === puzzle.rows) {
-                        break;
-                    } else if (!puzzle.cells[skip][curColumn].isBlack) {
-                        curRow = skip;
-                        break;
-                    }
+    // Handle Arrow Keys
+    var curRow = currentSelectedCell.row;
+    var curColumn = currentSelectedCell.column;
+    if (e.keyCode == '38') {
+        // up arrow
+        if (isSelectingAcrossClues) {
+            isSelectingAcrossClues = false;
+        }
+        else if (curRow <= 0) {
+            return;
+        }
+        else if (!puzzle.cells[curRow-1][curColumn].isBlack) {
+            curRow--;
+        } else {
+            var skip = curRow;
+            while (true) {
+                skip--;
+                if (skip === puzzle.rows) {
+                    break;
+                } else if (!puzzle.cells[skip][curColumn].isBlack) {
+                    curRow = skip;
+                    break;
                 }
             }
-            SelectCell(puzzle.cells[curRow][curColumn]);
         }
-        else if (e.keyCode == '40') {
-            // down arrow
-            if (isSelectingAcrossClues) {
-                isSelectingAcrossClues = false;
-            }
-            else if (curRow >= puzzle.rows-1) {
-                return;
-            }
-            else if (!puzzle.cells[curRow+1][curColumn].isBlack) {
-                curRow++;
-            } else {
-                var skip = curRow;
-                while (true) {
-                    skip++;
-                    if (skip === puzzle.rows) {
-                        break;
-                    } else if (!puzzle.cells[skip][curColumn].isBlack) {
-                        curRow = skip;
-                        break;
-                    }
+        SelectCell(puzzle.cells[curRow][curColumn]);
+    }
+    else if (e.keyCode == '40') {
+        // down arrow
+        if (isSelectingAcrossClues) {
+            isSelectingAcrossClues = false;
+        }
+        else if (curRow >= puzzle.rows-1) {
+            return;
+        }
+        else if (!puzzle.cells[curRow+1][curColumn].isBlack) {
+            curRow++;
+        } else {
+            var skip = curRow;
+            while (true) {
+                skip++;
+                if (skip === puzzle.rows) {
+                    break;
+                } else if (!puzzle.cells[skip][curColumn].isBlack) {
+                    curRow = skip;
+                    break;
                 }
             }
-            SelectCell(puzzle.cells[curRow][curColumn]);
         }
-        else if (e.keyCode == '37') {
-            // left arrow
-            if (!isSelectingAcrossClues) {
-                isSelectingAcrossClues = true;
-            }
-            else if (curColumn <= 0) {
-                return;
-            }
-            else if (!puzzle.cells[curRow][curColumn-1].isBlack) {
-                curColumn--;
-            } else {
-                var skip = curColumn;
-                while (true) {
-                    skip--;
-                    if (skip < 0) {
-                        break;
-                    } else if (!puzzle.cells[curRow][skip].isBlack) {
-                        curColumn = skip;
-                        break;
-                    }
+        SelectCell(puzzle.cells[curRow][curColumn]);
+    }
+    else if (e.keyCode == '37') {
+        // left arrow
+        if (!isSelectingAcrossClues) {
+            isSelectingAcrossClues = true;
+        }
+        else if (curColumn <= 0) {
+            return;
+        }
+        else if (!puzzle.cells[curRow][curColumn-1].isBlack) {
+            curColumn--;
+        } else {
+            var skip = curColumn;
+            while (true) {
+                skip--;
+                if (skip < 0) {
+                    break;
+                } else if (!puzzle.cells[curRow][skip].isBlack) {
+                    curColumn = skip;
+                    break;
                 }
             }
-            SelectCell(puzzle.cells[curRow][curColumn]);
         }
-        else if (e.keyCode == '39') {
-            // right arrow
-            if (!isSelectingAcrossClues) {
-                isSelectingAcrossClues = true;
-            }
-            else if (curColumn >= puzzle.columns-1) {
-                return;
-            }
-            else if (!puzzle.cells[curRow][curColumn+1].isBlack) {
-                curColumn++;
-            } else {
-                var skip = curColumn;
-                while (true) {
-                    skip++;
-                    if (skip === puzzle.columns) {
-                        break;
-                    } else if (!puzzle.cells[curRow][skip].isBlack) {
-                        curColumn = skip;
-                        break;
-                    }
+        SelectCell(puzzle.cells[curRow][curColumn]);
+    }
+    else if (e.keyCode == '39') {
+        // right arrow
+        if (!isSelectingAcrossClues) {
+            isSelectingAcrossClues = true;
+        }
+        else if (curColumn >= puzzle.columns-1) {
+            return;
+        }
+        else if (!puzzle.cells[curRow][curColumn+1].isBlack) {
+            curColumn++;
+        } else {
+            var skip = curColumn;
+            while (true) {
+                skip++;
+                if (skip === puzzle.columns) {
+                    break;
+                } else if (!puzzle.cells[curRow][skip].isBlack) {
+                    curColumn = skip;
+                    break;
                 }
             }
-            SelectCell(puzzle.cells[curRow][curColumn]);
         }
-        else if (e.keyCode == '8' || e.keyCode == '46') {
-            // Backspace and Delete
-            e.preventDefault();
-            if(currentSelectedCell.cellView.children[2].innerHTML === "") {
-                SelectPreviousCell(true);
-            } else {
-                currentSelectedCell.cellView.children[2].innerHTML = "";
-                currentSelectedCell.text = "";
-                SavePuzzle();
-            }
-            ShowCluesWithNoKnownSolution();
-        } 
-        else if (e.keyCode == '9') {
-            // Tab
-            e.preventDefault();
-            if (e.shiftKey) {
-                SelectPreviousClue();
-            } else {
-                SelectNextClue();        
-            }
-        }
-        else if (e.keyCode >= 65 && e.keyCode <= 90) {
-            var letter = e.key.toUpperCase();
-            currentSelectedCell.cellView.children[2].innerHTML = letter;
-            currentSelectedCell.text = letter;
+        SelectCell(puzzle.cells[curRow][curColumn]);
+    }
+    else if (e.keyCode == '8' || e.keyCode == '46') {
+        // Backspace and Delete
+        e.preventDefault();
+        if(currentSelectedCell.cellView.children[2].innerHTML === "") {
+            SelectPreviousCell(true);
+        } else {
+            currentSelectedCell.cellView.children[2].innerHTML = "";
+            currentSelectedCell.text = "";
             SavePuzzle();
-            SelectNextCell();
-            ShowCluesWithNoKnownSolution();
         }
+    } 
+    else if (e.keyCode == '9') {
+        // Tab
+        e.preventDefault();
+        if (e.shiftKey) {
+            SelectPreviousClue();
+        } else {
+            SelectNextClue();        
+        }
+    }
+    else if (e.keyCode >= 65 && e.keyCode <= 90) {
+        var letter = e.key.toUpperCase();
+        currentSelectedCell.cellView.children[2].innerHTML = letter;
+        currentSelectedCell.text = letter;
+        SavePuzzle();
+        SelectNextCell();
     }
 }
 
@@ -887,233 +750,5 @@ function SavePuzzle() {
         savePuzzle.cluesDown.push(clue);
     }
 
-    window.localStorage.setItem('SavePuzzle', JSON.stringify(savePuzzle));
-}
-
-function OnAutoGridButtonClick() {
-
-    var fastGrid = GetFastGrid(puzzle);
-    GetFastGridStats(fastGrid); 
-}
-
-function GetFastGrid(aPuzzle) {
-    // FastGrid is used for searching for automatic black square layouts
-    // '.' means black (editable)
-    // '#' means black (not editable)
-    // 'A' means not black (editable)
-    // '@' means not black (not editable)
-    var fastGrid = [];
-    for (var i=0; i<aPuzzle.rows; i++) {
-        var curRowData = [];
-        for (var j=0; j<aPuzzle.columns; j++) {
-            if (aPuzzle.cells[i][j].isBlack) {
-                curRowData.push("#");
-            } else if (aPuzzle.cells[i][j].text.length != 0) {
-                curRowData.push("@");
-            } else {
-                curRowData.push("A");
-            }
-        }
-        fastGrid.push(curRowData);
-    }
-    return fastGrid;
-}
-
-function GetFastGridStats(fastGrid) {
-    // All words must be at least 3 letters long
-    var isValid = true;
-    var wordLengths = [];
-    var avgWordLength = 0;
-    var wordCount = 0;
-    for (var i=0; i<fastGrid.length; i++) {
-        var curRow = fastGrid[i];
-        var j=0;
-        while (j<curRow.length) {
-            // Go to the start of the next solution
-            while (j < curRow.length && (curRow[j] === '.' || curRow[j] === '#')) {
-                j++;
-            }
-            // Count the letters
-            var curWordLength = 0;
-            while (j < curRow.length && (curRow[j] === 'A' || curRow[j] === '@')) {
-                curWordLength++;
-                j++;
-                if (j === curRow.length) {
-                    break;
-                }
-            }
-            if (curWordLength === 0) {
-                continue;
-            }
-            if (curWordLength < 3) {
-                isValid = false;
-            }
-            avgWordLength += curWordLength;
-            wordCount++;
-            if (wordLengths[curWordLength] === undefined) {
-                wordLengths[curWordLength] = 1;
-            } else {
-                wordLengths[curWordLength]++;
-            }
-        }
-    }
-    for (var i=0; i<fastGrid[0].length; i++) {
-        var j=0;
-        while (j<fastGrid.length) {
-            // Go to the start of the next solution
-            while (j < fastGrid.length && (fastGrid[j][i] === '.' || fastGrid[j][i] === '#')) {
-                j++;
-            }
-            // Count the letters
-            var curWordLength = 0;
-            while (j < fastGrid.length && (fastGrid[j][i] === 'A' || fastGrid[j][i] === '@')) {
-                curWordLength++;
-                j++;
-                if (j === fastGrid.length) {
-                    break;
-                }
-            }
-            if (curWordLength === 0) {
-                continue;
-            }
-            if (curWordLength < 3) {
-                isValid = false;
-            }
-            avgWordLength += curWordLength;
-            wordCount++;
-            if (wordLengths[curWordLength] === undefined) {
-                wordLengths[curWordLength] = 1;
-            } else {
-                wordLengths[curWordLength]++;
-            }
-        }
-    }
-
-    avgWordLength = avgWordLength / wordCount;
-    return [isValid, wordCount, avgWordLength];
-}
-
-function SuggestLettersForCurrentSelectedClue() {
-    if (currentSelectedCell === null ) {
-        return;
-    }
-
-    var answerList = document.getElementById('SuggestedAnswerList');
-    answerList.innerHTML = "";
-
-    var clue = isSelectingAcrossClues ? currentSelectedCell.acrossClue : currentSelectedCell.downClue;
-    var [matches, atLeastOneLetterAlready, alreadyAnswered] = GetPossibleSolutionsForClue(clue);
-    if (atLeastOneLetterAlready) {
-        for (var i=0; i<matches.length; i++) {
-            var li = document.createElement('li');
-            li.innerHTML = matches[i];
-            answerList.appendChild(li);
-        }
-        document.getElementById('SuggestWordsTitle').innerHTML = "(" + matches.length + ") known answers";
-    } else {
-        document.getElementById('SuggestWordsTitle').innerHTML = "known answers";
-    }
-}
-
-function GetPossibleSolutionsForClue(clue, limitMatches) {
-    var answerPattern = "";
-    var atLeastOneLetterAlready = false;
-    var alreadyAnswered = true;
-    if (clue.isAcross) {
-        var curColumn = clue.startCell.column;
-        var curRow = clue.startCell.row;
-        var startIndex = clue.startCell.column;
-        var endIndex = startIndex + clue.answerLength
-        for (var i=startIndex; i<endIndex; i++) {
-            if (puzzle.cells[curRow][curColumn].text.length === 0) {
-                answerPattern += ".";
-                alreadyAnswered = false;
-            } else if (puzzle.cells[curRow][curColumn].text.length === 1) {
-                answerPattern += puzzle.cells[curRow][curColumn].text;
-                atLeastOneLetterAlready = true;
-            }
-            curColumn++;
-        }
-    } else {
-        var curColumn = clue.startCell.column;
-        var curRow = clue.startCell.row;
-        var startIndex = clue.startCell.row;
-        var endIndex = startIndex + clue.answerLength
-        for (var i=startIndex; i<endIndex; i++) {
-            if (puzzle.cells[curRow][curColumn].text.length === 0) {
-                answerPattern += ".";
-                alreadyAnswered = false;
-            } else if (puzzle.cells[curRow][curColumn].text.length === 1) {
-                answerPattern += puzzle.cells[curRow][curColumn].text;
-                atLeastOneLetterAlready = true;
-            }
-            curRow++;
-        }
-    }
-
-    var matches = [];
-    var wordsOfLength = wordsByLength[answerPattern.length];
-    if (wordsOfLength !== undefined) {
-        for (var i=0; i<wordsOfLength.length; i++) {
-            var checkWord = wordsOfLength[i];
-            if (checkWord.search(answerPattern) === 0) {
-                matches.push(checkWord);
-                if (limitMatches && matches.length >= limitMatches) {
-                    break;
-                }
-            }
-        }    
-    }
-    return [matches, atLeastOneLetterAlready, alreadyAnswered];
-}
-
-function ShowCluesWithNoKnownSolution() {
-    var cluesAndMatches = [];
-    for (var i=0; i<puzzle.cluesAcross.length; i++) {
-        var [matches, atLeastOneLetterAlready, alreadyAnswered] = GetPossibleSolutionsForClue(puzzle.cluesAcross[i], 1);
-        var clueAndMatches = {};
-        clueAndMatches.clue = puzzle.cluesAcross[i];
-        clueAndMatches.matches = matches;
-        clueAndMatches.atLeastOneLetterAlready = atLeastOneLetterAlready;
-        clueAndMatches.alreadyAnswered = alreadyAnswered;
-        cluesAndMatches.push(clueAndMatches);
-    }
-    for (var i=0; i<puzzle.cluesDown.length; i++) {
-        var [matches, atLeastOneLetterAlready, alreadyAnswered] = GetPossibleSolutionsForClue(puzzle.cluesDown[i], 1);
-        var clueAndMatches = {};
-        clueAndMatches.clue = puzzle.cluesDown[i];
-        clueAndMatches.matches = matches;
-        clueAndMatches.atLeastOneLetterAlready = atLeastOneLetterAlready;
-        clueAndMatches.alreadyAnswered = alreadyAnswered;
-        cluesAndMatches.push(clueAndMatches);
-    }
-
-    cluesAndMatches.sort(function(a,b) { return a.matches.length - b.matches.length;});
-
-    // First clear all warnings
-    for (var i=0; i<puzzle.rows; i++) {
-        for (var j=0; j<puzzle.columns; j++) {
-            puzzle.cells[i][j].cellView.children[0].setAttribute("stroke", "none");
-        }
-    }
-
-    for (var i=0; i<cluesAndMatches.length; i++) {
-        var clue = cluesAndMatches[i].clue;
-        var isProblemCell = cluesAndMatches[i].matches.length == 0 && !cluesAndMatches[i].alreadyAnswered;
-        var curRow = clue.startCell.row;
-        var curColumn = clue.startCell.column;
-        for (var j=0; j<clue.answerLength; j++) {
-            var cellView = puzzle.cells[curRow][curColumn].cellView;
-            if (isProblemCell) {
-                cellView.children[0].setAttribute("stroke", "red");
-                cellView.children[0].setAttribute("stroke-width", "2px");
-            }
-            if (clue.isAcross) {
-                curColumn++;
-            } else {
-                curRow++;
-            }
-        }
-        
-    }
+    window.localStorage.setItem('CurrentSolverPuzzle', JSON.stringify(savePuzzle));
 }

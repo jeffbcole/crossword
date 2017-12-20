@@ -1,197 +1,30 @@
-.PuzzleLayout {
-    -webkit-box-align: start;
-    -webkit-align-items: flex-start;
-    -ms-flex-align: start;
-    align-items: flex-start;
-    height: 100vh;
-    max-height: 660px;
-    -webkit-justify-content: space-around;
-    -ms-flex-pack: distribute;
-    justify-content: space-around;
-    margin: auto;
-    max-width: 1132px;
-    padding: 10px;
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    font-family: arial,sans-serif;
-}
-
-.BoardAndClueBar {
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: column;
-    -ms-flex-direction: column;
-    flex-direction: column;
+  
+#EditToolsLayout {
     width: 100%;
+    height: calc(50% - 20px);
+    padding: 0px;
+    margin-top: 20px;
 }
 
-.ClueBar {
-    -webkit-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
-    align-items: center;
-    background: #dcefff;
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    font-size: 1.2em;
-    margin-bottom: 10px;
-    min-height: 60px;
-}
-
-#ClueBarNumber {
-    font-weight: 700;
-    min-width: 60px;
-    text-align: center;
-    width: 60px;
-}
-
-#ClueBarText {
-    padding-right: 10px;
-    line-height: 23px;
-    border: none;
-    background: transparent;
-    min-width: 100px;
-    font-size: 14pt;
-    width: 80%;
-    resize: none;
-    max-height: 50px;
-    height: 25px;
-    font-family: arial,sans-serif;
-}
-
-#Board {
-    display: block;
-    font-family: arial,sans-serif;
-    margin: 1px;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+#EditToolsLayoutTitle {
+    margin: 3px;
     width: 100%;
-}
-
-.CluesLayout {
-    -webkit-flex-wrap: wrap;
-    -ms-flex-wrap: wrap;
-    flex-wrap: wrap;
-    -webkit-justify-content: space-around;
-    -ms-flex-pack: distribute;
-    justify-content: space-around;
-    max-height: 625px;
-    display: flex;
-    height: 100%;
-    width: 96%;
-    margin-left: 1%;
-}
-
-.ClueList {
-    width: 47%;
-    height: 100%;
-}
-
-.ClueTitle {
+    height: 20px;
     border-bottom: 1px solid #e6e6e6;
-    content: attr(name);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size:11pt;
 }
 
-.ClueListList {
-    height: calc(100% - 30px);
-    overflow-y: scroll;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    font-size: 11pt;
+#SuggestedWordsList {
+    width: 33%;
+    height: calc(100% - 100px);
+    margin-left: 2%;
+    margin: auto;
 }
 
-.ClueLI {
-    border-left: 10px solid transparent;
-    cursor: pointer;
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    padding: 5px 1px;
-    line-height: 1.4;
-    margin-right: 5px;
+#SuggestWordsTitle {
+    font-size: 13px;
+    height: 20px;
 }
 
-.ClueLabel {
-    font-weight: 700;
-    margin-right: 5px;
-    text-align: right;
-    min-width: 24px;
-    width: 24px;
-}
+#SuggestedAnswerList {
 
-.ClueText {
-    margin-left: 5px;
-    resize: none;
-    font-family: arial,sans-serif;
-    overflow: hidden;
-    font-size: 11pt;
-    border: none;
-    background: transparent;
 }
-
-.TitleInfo {
-    width: 100%;
-    white-space: nowrap;
-}
-
-.Title {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 18pt;
-    text-align: center;
-    border: none;
-    width: 100%;
-    text-align: center;
-}
-
-.radio-toolbar {
-    margin: 10px;
-  }
-  
-  .radio-toolbar input[type="radio"] {
-      display:none; 
-  }
-  
-  .radio-toolbar label {
-      display:inline-block;
-      background-color:white;
-      padding: 5px;
-      font-family:Arial;
-      font-size:16px;
-      border: 1px solid black;
-      border-radius: 0px;    
-      vertical-align: bottom;
-      width: 50px;
-      height: 20px;
-      color: black;
-      margin-right: -5px;
-      cursor: pointer;
-  }
-  
-.radio-toolbar label.first {
-    border-radius: 6px 0px 0px 6px;
-}
-
-.radio-toolbar label.last {
-    border-radius: 0px 6px 6px 0px;
-}
-
-.radio-toolbar label:hover {
-    background-color: #dcefff;
-}
-  
-  .radio-toolbar input[type="radio"]:checked + label { 
-      background-color:#007ee6;
-      color: white;
-  }
-  
