@@ -1,3 +1,10 @@
+
+*, *:before, *:after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 .ClueBar {
     -webkit-box-align: center;
     -webkit-align-items: center;
@@ -7,7 +14,7 @@
     display: -webkit-box;
     display: -webkit-flex;
     display: -ms-flexbox;
-    display: flex;
+    display: none;
     font-size: 1.2em;
     margin-bottom: 10px;
     min-height: 60px;
@@ -42,7 +49,7 @@
     -ms-flex-pack: distribute;
     justify-content: space-around;
     max-height: 625px;
-    display: flex;
+    display: none;
     height: 100%;
     width: 96%;
     margin-left: 1%;
@@ -102,3 +109,51 @@
     border: none;
     background: transparent;
 }
+
+.TabsRegion {
+    max-height: 625px;
+    height: 100%;
+    width: 96%;
+    margin-left: 1%;
+}
+
+.TabsInput {
+    display: none;
+}
+
+.TabsLabel {
+    display: inline-block;
+    margin: 0 0 -1px;
+    padding: 15px 25px;
+    font-weight: 600;
+    text-align: center;
+    color: #bbb;
+    border: 1px solid transparent;
+  }
+
+  .TabsLabel:hover {
+    color: #888;
+    cursor: pointer;
+  }
+  
+  .TabsInput:checked + label {
+    color: #555;
+    border: 1px solid #ddd;
+    border-top: 2px solid orange;
+    border-bottom: 1px solid #fff;
+  }
+  
+  .TabView {
+      display: none;
+      height: 100%;
+      border-top: 1px solid #ddd;
+      padding: 20px 0 0;
+  }
+
+
+  #tab1:checked ~ #content1,
+  #tab2:checked ~ #content2,
+  #tab3:checked ~ #content3,
+  #tab4:checked ~ #content4 {
+    display: block;
+  }
