@@ -53,7 +53,7 @@
             <label class="TabsLabel" for="tab1">General</label>
             
             <input class="TabsInput" id="tab2" type="radio" name="tabs">
-            <label class="TabsLabel" for="tab2">Clues</label>
+            <label class="TabsLabel" for="tab2">Words/Clues</label>
             
             <input class="TabsInput" id="tab3" type="radio" name="tabs">
             <label class="TabsLabel" for="tab3">Auto-Fill</label>
@@ -62,12 +62,49 @@
             <label class="TabsLabel" for="tab4">Sources</label>
             
             <div class="TabView" id="content1">
-            <p>
-                Bacon ipsum dolor sit amet beef venison beef ribs kielbasa. Sausage pig leberkas, t-bone sirloin shoulder bresaola. Frankfurter rump porchetta ham. Pork belly prosciutto brisket meatloaf short ribs.
-            </p>
-            <p>
-                Brisket meatball turkey short loin boudin leberkas meatloaf chuck andouille pork loin pastrami spare ribs pancetta rump. Frankfurter corned beef beef tenderloin short loin meatloaf swine ground round venison.
-            </p>
+                <div class="SettingsRegion">
+                    <table>
+                        <tr>
+                            <td>Title:</td>
+                            <td><input type="test" class="SettingsInput"/></td>
+                        </tr>
+                        <tr>
+                            <td>Author:</td>
+                            <td><input type="test" class="SettingsInput"/></td>
+                        </tr>
+                        <tr>
+                            <td>Copyright:</td>
+                            <td><input type="test" class="SettingsInput"/></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="SettingsRegion">
+                    <div class="SettingsRegionTitle">Grid Size</div>
+                        <label class="SizesContainer">Weekday<div style="font-size:11px">(15x15)</div>
+                        <input type="radio" name="sizeRadio" checked="checked">
+                        <span class="checkmark"></span>
+                        </label>
+                        
+                        <label class="SizesContainer">Sunday<div style="font-size:11px">(21x21)</div>
+                        <input type="radio" name="sizeRadio">
+                        <span class="checkmark"></span>
+                        </label>
+                        
+                        <label class="SizesContainer" style="padding-right:0px">Custom<div style="font-size:11px">(Rows x Columns)</div>
+                        <input type="radio" name="sizeRadio">
+                        <span class="checkmark"></span>
+                        </label>
+
+                        <div id="CustomSizeRegion">
+                            <table id="CustomSizesTable">
+                                <tr>
+                                    <td><input type="text" class="SizeInput"/></td>
+                                    <td><input type="text" class="SizeInput"/></td>
+                                </tr>
+                            </table>
+                        </div>
+                    
+                </div>
             </div>
             
             <div class="TabView" id="content2">
