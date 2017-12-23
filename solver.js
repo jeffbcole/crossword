@@ -36,7 +36,6 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     puzzle.cells = [];
     puzzle.cluesAcross = savedPuzzle ? savedPuzzle.cluesAcross : [];
     puzzle.cluesDown = savedPuzzle ? savedPuzzle.cluesDown : [];
-    puzzle.isSunday = savedPuzzle ? savedPuzzle.isSunday : true;
     puzzle.rows = savedPuzzle ? savedPuzzle.rows : 21;
     puzzle.columns = savedPuzzle ? savedPuzzle.columns : 21;
 
@@ -53,12 +52,12 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     
     var cellWidth = 495.0/puzzle.rows;
     var cellHeight = 495.0/puzzle.columns;
-    var cellNumberFontSize = puzzle.isSunday ? 7.67 : 10;
-    var cellTextFontSize = puzzle.isSunday ? 15.33 : 22;
+    var cellNumberFontSize = puzzle.rows > 19 ? 7.67 : 10;
+    var cellTextFontSize = puzzle.rows > 19 ? 15.33 : 22;
     var cellNumberOffsetX = 2;
-    var cellNumberOffsetY = puzzle.isSunday ? 8.17 : 11.5;
-    var cellTextOffsetX = puzzle.isSunday ?  11.5 : 16;
-    var cellTextOffsetY = puzzle.isSunday ? 21.08 : 30.25;
+    var cellNumberOffsetY = puzzle.rows > 19 ? 8.17 : 11.5;
+    var cellTextOffsetX = puzzle.rows > 19 ?  11.5 : 16;
+    var cellTextOffsetY = puzzle.rows > 19 ? 21.08 : 30.25;
     var curTop = 3.0;
     var curLeft = 3.0;
     var curIndex = 1;
@@ -712,7 +711,6 @@ function SavePuzzle() {
     savePuzzle.title = puzzle.title;
     savePuzzle.rows = puzzle.rows;
     savePuzzle.columns = puzzle.columns;
-    savePuzzle.isSunday = puzzle.isSunday;
     savePuzzle.cells = [];
     for (var i=0; i<puzzle.rows; i++) {
         var cellRow = [];

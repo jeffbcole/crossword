@@ -5,6 +5,10 @@ var isSymetrical = true;
 
 var boardBorder;
 
+var currentSelectedPuzzleSize = 'Weekday';
+var currentBoardWidth = 495.0;
+var currentBoardHeight = 495.0;
+
 function Initialize() {
 
     document.getElementById('Title').addEventListener("input", OnTitleChanged);
@@ -18,7 +22,18 @@ function Initialize() {
     // Detect when user is typing
     MakeFocusDetectable(document.getElementById('ClueBarText'));
     MakeFocusDetectable(document.getElementById('Title'));
-
+    MakeFocusDetectable(document.getElementById('CustomSizeRows'));
+    MakeFocusDetectable(document.getElementById('CustomSizeColumns'));
+    MakeFocusDetectable(document.getElementById('SettingsRegionTitle'));
+    MakeFocusDetectable(document.getElementById('SettingsRegionAuthor'));
+    MakeFocusDetectable(document.getElementById('SettingsRegionCopyright'));
+    
+    document.getElementById('SettingsRegionTitle').addEventListener("input", OnSettingsTitleChanged);
+    document.getElementById('SettingsRegionAuthor').addEventListener("input", OnSettingsAuthorChanged);
+    document.getElementById('SettingsRegionCopyright').addEventListener("input", OnSettingsCopyrightChanged);
+    document.getElementById('CustomSizeRows').addEventListener("input", OnCustomSizesChanged);
+    document.getElementById('CustomSizeColumns').addEventListener("input", OnCustomSizesChanged);
+    
     MakeTextAreaAutoSizeHeight(document.getElementById('ClueBarText'), 200);
 
     // Load saved puzzle if it exists
@@ -27,7 +42,7 @@ function Initialize() {
         var savedPuzzle = JSON.parse(savedPuzzleString);
         InitializeBoardForPuzzle(savedPuzzle);
     } else {
-        InitializeBoardForPuzzle(null);        
+        InitializeBoardForPuzzle(null, 15, 15);        
     }
     
     document.onkeydown = checkKey;
@@ -45,7 +60,7 @@ function Initialize() {
 
 var wordsByLength = [];
 function CreateWordsLookupTable(allwordsText) {
-    var allWords = allwordsText.split("\r\n");
+    var allWords = allwordsText.split(",");
     for (var i=0; i<allWords.length; i++) {
         var word = allWords[i];
         if (wordsByLength[word.length] === undefined) {
@@ -89,6 +104,29 @@ function OnTitleChanged() {
     var el = document.getElementById('Title');
     var curTitle = el.value;
     puzzle.title = curTitle;
+    var otherTitle = document.getElementById('SettingsRegionTitle');
+    otherTitle.value = curTitle;
+    SavePuzzle();
+}
+
+function OnSettingsTitleChanged() {
+    var el = document.getElementById('SettingsRegionTitle');
+    var curTitle = el.value;
+    puzzle.title = curTitle;
+    var otherTitle = document.getElementById('Title');
+    otherTitle.value = curTitle;
+    SavePuzzle();
+}
+
+function OnSettingsAuthorChanged() {
+    var el = document.getElementById('SettingsRegionAuthor');
+    puzzle.author = el.value;
+    SavePuzzle();
+}
+
+function OnSettingsCopyrightChanged() {
+    var el = document.getElementById('SettingsRegionCopyright');
+    puzzle.copyright = el.value;
     SavePuzzle();
 }
 
@@ -123,18 +161,50 @@ function OnClueListItemTextChanged(ev) {
     }
 }
 
-function InitializeBoardForPuzzle(savedPuzzle) {
+function InitializeBoardForPuzzle(savedPuzzle, rows, columns) {
     puzzle = {};
-    puzzle.title = savedPuzzle ? savedPuzzle.title : "Untitled";
+    puzzle.title = savedPuzzle ? savedPuzzle.title : "";
+    puzzle.author = savedPuzzle ? savedPuzzle.author : "";
+    puzzle.copyright = savedPuzzle ? savedPuzzle.copyright : "";
     puzzle.cells = [];
     puzzle.cluesAcross = savedPuzzle ? savedPuzzle.cluesAcross : [];
     puzzle.cluesDown = savedPuzzle ? savedPuzzle.cluesDown : [];
-    puzzle.isSunday = savedPuzzle ? savedPuzzle.isSunday : true;
-    puzzle.rows = savedPuzzle ? savedPuzzle.rows : 21;
-    puzzle.columns = savedPuzzle ? savedPuzzle.columns : 21;
+    puzzle.rows = savedPuzzle ? savedPuzzle.rows : rows;
+    puzzle.columns = savedPuzzle ? savedPuzzle.columns : columns;
 
     document.getElementById('Title').value = puzzle.title;
-    
+    document.getElementById('SettingsRegionTitle').value = puzzle.title;
+    document.getElementById('SettingsRegionAuthor').value = puzzle.author;
+    document.getElementById('SettingsRegionCopyright').value = puzzle.copyright;
+
+    var gridTypeWeekday = document.getElementById('SettingsSizeWeekday');
+    var gridTypeSunday = document.getElementById('SettingsSizeSunday');
+    var gridTypeCustom = document.getElementById('SettingsSizeCustom');
+    var gridCustomRows = document.getElementById('CustomSizeRows');
+    var gridCustomColumns = document.getElementById('CustomSizeColumns');
+    if (puzzle.rows == 15 && puzzle.columns == 15) {
+        gridTypeWeekday.checked = true;
+        currentSelectedPuzzleSize = 'Weekday';
+        gridCustomRows.value = "";
+        gridCustomColumns.value = "";
+        gridCustomColumns.disabled = true;
+        gridCustomRows.disabled = true;
+    } else if (puzzle.rows == 21 && puzzle.columns == 21) {
+        gridTypeSunday.checked = true;
+        currentSelectedPuzzleSize = 'Sunday';
+        gridCustomRows.value = "";
+        gridCustomColumns.value = "";
+        gridCustomColumns.disabled = true;
+        gridCustomRows.disabled = true;
+    } else {
+        gridTypeCustom.checked = true;
+        currentSelectedPuzzleSize = 'Custom';
+        gridCustomRows.value = puzzle.rows;
+        gridCustomColumns.value = puzzle.columns;
+        gridCustomColumns.disabled = false;
+        gridCustomRows.disabled = false;
+    }
+
     var cellsContainer = document.getElementById('BoardCells')
     cellsContainer.innerHTML = "";
     var boardGrid = document.getElementById('BoardGrid');
@@ -144,14 +214,28 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     var downCluesContainer = document.getElementById('CluesListDown');
     downCluesContainer.innerHTML = "";
     
-    var cellWidth = 495.0/puzzle.rows;
-    var cellHeight = 495.0/puzzle.columns;
-    var cellNumberFontSize = puzzle.isSunday ? 7.67 : 10;
-    var cellTextFontSize = puzzle.isSunday ? 15.33 : 22;
+    var standardWidth = 495.0;
+    var standardHeight = 495.0;
+
+    if (puzzle.rows != puzzle.columns) {
+        if (puzzle.rows > puzzle.columns) {
+            standardWidth = standardWidth*puzzle.columns/puzzle.rows;
+        } else {
+            standardHeight = standardWidth*puzzle.rows/puzzle.columns;
+        }
+    }
+
+    currentBoardHeight = standardHeight;
+    currentBoardWidth = standardWidth;
+
+    var cellWidth = standardHeight/puzzle.rows;
+    var cellHeight = standardWidth/puzzle.columns;
+    var cellNumberFontSize = puzzle.rows > 19 ? 7.67 : 10;
+    var cellTextFontSize = puzzle.rows > 19 ? 15.33 : 22;
     var cellNumberOffsetX = 2;
-    var cellNumberOffsetY = puzzle.isSunday ? 8.17 : 11.5;
-    var cellTextOffsetX = puzzle.isSunday ?  11.5 : 16;
-    var cellTextOffsetY = puzzle.isSunday ? 21.08 : 30.25;
+    var cellNumberOffsetY = puzzle.rows > 19 ? 8.17 : 11.5;
+    var cellTextOffsetX = puzzle.rows > 19 ?  11.5 : 16;
+    var cellTextOffsetY = puzzle.rows > 19 ? 21.08 : 30.25;
     var curTop = 3.0;
     var curLeft = 3.0;
     var curIndex = 1;
@@ -229,13 +313,13 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     curLeft = 3.0;
     curTop = 3.0 + cellHeight;
     for (var i=0; i<puzzle.rows-1; i++) {
-        pathText = pathText + "M" + curLeft + "," + curTop + " l495.00,0.00";
+        pathText = pathText + "M" + curLeft + "," + curTop + " l" + standardWidth + ",0.00";
         curTop = curTop + cellHeight;
     }
     curLeft = 3.0 + cellWidth;
     curTop = 3.0;
     for (var i=0; i<puzzle.columns-1; i++) {
-        pathText = pathText + "M" + curLeft + "," + curTop + " l0.0,495.0";
+        pathText = pathText + "M" + curLeft + "," + curTop + " l0.0," + standardHeight;
         curLeft = curLeft + cellWidth;
     }
     boardGridLines.setAttribute('d', pathText);
@@ -244,8 +328,8 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     boardBorder = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     boardBorder.setAttribute('x', 1.5);
     boardBorder.setAttribute('y', 1.5);
-    boardBorder.setAttribute('width', 498);
-    boardBorder.setAttribute('height', 498);
+    boardBorder.setAttribute('width', standardWidth + 3.0);
+    boardBorder.setAttribute('height', standardHeight + 3.0);
     boardBorder.setAttribute('fill', 'none');
     boardBorder.setAttribute('stroke-width', 3.0);
     boardBorder.setAttribute('stroke', 'black');
@@ -264,9 +348,9 @@ function OnBoardClick(evt) {
     var pt = board.createSVGPoint();
     pt.x = evt.clientX; pt.y = evt.clientY;
     var clickLoc = pt.matrixTransform(board.getScreenCTM().inverse());
-    var column = Math.floor((puzzle.columns)*(clickLoc.x-5)/495.0);
+    var column = Math.floor((puzzle.columns)*(clickLoc.x-5)/currentBoardWidth);
     column = Math.min(Math.max(column, 0), puzzle.columns-1);
-    var row = Math.floor((puzzle.rows)*(clickLoc.y-5)/495.0);
+    var row = Math.floor((puzzle.rows)*(clickLoc.y-5)/currentBoardHeight);
     row = Math.min(Math.max(row, 0), puzzle.rows-1);
     var cell = puzzle.cells[row][column];
 
@@ -313,6 +397,7 @@ function OnBoardClick(evt) {
 
         }
 
+        SelectCell(currentSelectedCell);
         ShowCluesWithNoKnownSolution();
 
     } else {
@@ -498,7 +583,9 @@ function SelectCell(cell) {
         currentSelectedCell.downClue.clueView.style.borderLeftColor = 'transparent';
         document.getElementById('ClueBarText').value = "";
         for (var i=0; i<currentHighlightedCells.length; i++) {
-            currentHighlightedCells[i].cellView.children[0].setAttribute("fill", "transparent");
+            if (!currentHighlightedCells[i].isBlack) {
+                currentHighlightedCells[i].cellView.children[0].setAttribute("fill", "transparent");
+            }
         }
     }
 
@@ -553,6 +640,7 @@ function SelectCell(cell) {
         }
     }
 
+    ShowCurrentAnswerLetters();
     SuggestLettersForCurrentSelectedClue();
 }
 
@@ -834,12 +922,16 @@ function checkKey(e) {
             }
         }
         else if (e.keyCode >= 65 && e.keyCode <= 90) {
-            var letter = e.key.toUpperCase();
-            currentSelectedCell.cellView.children[2].innerHTML = letter;
-            currentSelectedCell.text = letter;
-            SavePuzzle();
-            SelectNextCell();
-            ShowCluesWithNoKnownSolution();
+            if (e.metaKey) {
+                // Apple command key was used so we ignore
+            } else {
+                var letter = e.key.toUpperCase();
+                currentSelectedCell.cellView.children[2].innerHTML = letter;
+                currentSelectedCell.text = letter;
+                SavePuzzle();
+                SelectNextCell();
+                ShowCluesWithNoKnownSolution();
+            }
         }
     }
 }
@@ -847,9 +939,10 @@ function checkKey(e) {
 function SavePuzzle() {
     var savePuzzle = {};
     savePuzzle.title = puzzle.title;
+    savePuzzle.author = puzzle.author;
+    savePuzzle.copyright = puzzle.copyright;
     savePuzzle.rows = puzzle.rows;
     savePuzzle.columns = puzzle.columns;
-    savePuzzle.isSunday = puzzle.isSunday;
     savePuzzle.cells = [];
     for (var i=0; i<puzzle.rows; i++) {
         var cellRow = [];
@@ -993,6 +1086,61 @@ function GetFastGridStats(fastGrid) {
     return [isValid, wordCount, avgWordLength];
 }
 
+function ShowCurrentAnswerLetters() {
+    var answerContainer = document.getElementById('SelectedWordPatternGridRegion');
+    answerContainer.innerHTML = "";
+
+    if (currentSelectedCell === null) {
+        return;
+    }
+    
+    var clue = isSelectingAcrossClues ? currentSelectedCell.acrossClue : currentSelectedCell.downClue;
+    var shrinkSizeNeeded = false;
+    var shrinkSize = 30;
+    if (clue.answerLength > 14) {
+        shrinkSizeNeeded = true;
+        shrinkSize = 400.0 / clue.answerLength;
+    }
+    
+    if (clue.isAcross) {
+        var curColumn = clue.startCell.column;
+        var curRow = clue.startCell.row;
+        var startIndex = clue.startCell.column;
+        var endIndex = startIndex + clue.answerLength;
+        for (var i=startIndex; i<endIndex; i++) {
+            var gridCell = document.createElement("div");
+            gridCell.className = "SelectedWordPatternGridCell";
+            gridCell.innerHTML = puzzle.cells[curRow][curColumn].text;
+            if(shrinkSizeNeeded) {
+                gridCell.style.width = shrinkSize + "px";
+                gridCell.style.height = shrinkSize + "px";
+                gridCell.style.lineHeight = shrinkSize + "px";
+                gridCell.style.fontSize = 14 * shrinkSize/30 + "pt";
+            }
+            answerContainer.appendChild(gridCell);
+            curColumn++;
+        }
+    } else {
+        var curColumn = clue.startCell.column;
+        var curRow = clue.startCell.row;
+        var startIndex = clue.startCell.row;
+        var endIndex = startIndex + clue.answerLength;
+        for (var i=startIndex; i<endIndex; i++) {
+            var gridCell = document.createElement("div");
+            gridCell.className = "SelectedWordPatternGridCell";
+            gridCell.innerHTML = puzzle.cells[curRow][curColumn].text;
+            if(shrinkSizeNeeded) {
+                gridCell.style.width = shrinkSize + "px";
+                gridCell.style.height = shrinkSize + "px";
+                gridCell.style.lineHeight = shrinkSize + "px";
+                gridCell.style.fontSize = 14 * shrinkSize/30 + "pt";
+            }
+            answerContainer.appendChild(gridCell);
+            curRow++;
+        }
+    }
+}
+
 function SuggestLettersForCurrentSelectedClue() {
     if (currentSelectedCell === null ) {
         return;
@@ -1009,9 +1157,9 @@ function SuggestLettersForCurrentSelectedClue() {
             li.innerHTML = matches[i];
             answerList.appendChild(li);
         }
-        document.getElementById('SuggestWordsTitle').innerHTML = "(" + matches.length + ") known answers";
+        document.getElementById('SuggestWordsTitle').innerHTML = "(" + matches.length + ") Answer suggestions:";
     } else {
-        document.getElementById('SuggestWordsTitle').innerHTML = "known answers";
+        document.getElementById('SuggestWordsTitle').innerHTML = "Answer suggestions:";
     }
 }
 
@@ -1115,5 +1263,87 @@ function ShowCluesWithNoKnownSolution() {
             }
         }
         
+    }
+}
+
+function SizeTypeChanged(value) {
+    
+    var puzzleIsEmpty = true;
+    for (var i=0; i<puzzle.cells.length; i++) {
+        for (var j=0; j<puzzle.cells[i].length; j++) {
+            if (puzzle.cells[i][j].isBlack || puzzle.cells[i][j].text.length > 0) {
+                puzzleIsEmpty = false;
+                break;
+            }
+        }
+        if (!puzzleIsEmpty) {
+            break;
+        }
+    }
+
+    if(!puzzleIsEmpty) {
+        var confirm = window.confirm("This will reset your puzzle words and grid.  Are you sure you want to do this?");
+        if (!confirm) {
+            switch(currentSelectedPuzzleSize) {
+                case 'Weekday':
+                document.getElementById('SettingsSizeWeekday').checked = true;
+                break;
+                case 'Sunday':
+                document.getElementById('SettingsSizeSunday').checked = true;
+                break;
+                case 'Custom':
+                document.getElementById('SettingsSizeCustom').checked = true;
+                break;
+            }
+            return;
+        }
+    }
+
+    currentSelectedPuzzleSize = value;
+    var customRows = document.getElementById('CustomSizeRows');
+    var customColumns = document.getElementById('CustomSizeColumns');
+
+    switch(value) {
+        case 'Weekday':
+            customRows.value = "";
+            customColumns.value = "";
+            customRows.disabled = true;
+            customColumns.disabled = true;
+            if (puzzle.columns != 15 || puzzle.rows != 15) {
+                InitializeBoardForPuzzle(null, 15, 15);
+                SavePuzzle();
+            }
+        break;
+        case 'Sunday':
+            customRows.value = "";
+            customColumns.value = "";
+            customRows.disabled = true;
+            customColumns.disabled = true;
+            if (puzzle.columns != 21 || puzzle.rows != 21) {
+                InitializeBoardForPuzzle(null, 21, 21);
+                SavePuzzle();
+            }
+        break;
+        case 'Custom':
+            customRows.disabled = false;
+            customColumns.disabled = false;
+            var desiredRows = Number(customRows.value);
+            var desiredColumns = Number(customColumns.value);
+            if (desiredRows > 0 && desiredColumns > 0) {
+                InitializeBoardForPuzzle(null, desiredRows, desiredColumns);
+                SavePuzzle();
+            }
+        break;
+    }
+}
+
+function OnCustomSizesChanged() {
+    var customRows = document.getElementById('CustomSizeRows');
+    var customColumns = document.getElementById('CustomSizeColumns');
+    var desiredRows = Number(customRows.value);
+    var desiredColumns = Number(customColumns.value);
+    if (desiredRows > 0 && desiredColumns > 0) {
+        InitializeBoardForPuzzle(null, desiredRows, desiredColumns);
+        SavePuzzle();
     }
 }
