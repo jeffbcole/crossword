@@ -397,7 +397,11 @@ function OnBoardClick(evt) {
 
         }
 
-        SelectCell(currentSelectedCell);
+        if (currentSelectedCell.isBlack) {
+            SelectNextCell();
+        } else {
+            SelectCell(currentSelectedCell);
+        }
         ShowCluesWithNoKnownSolution();
 
     } else {
@@ -576,7 +580,11 @@ var currentHighlightedCells = [];
 
 function SelectCell(cell) {
     if (currentSelectedCell != undefined) {
-        currentSelectedCell.cellView.children[0].setAttribute('fill', 'none');
+        if (currentSelectedCell.isBlack) {
+            currentSelectedCell.cellView.children[0].setAttribute('fill', 'black');
+        } else {
+            currentSelectedCell.cellView.children[0].setAttribute('fill', 'none');
+        }
         currentSelectedCell.acrossClue.clueView.style.background = 'none';
         currentSelectedCell.acrossClue.clueView.style.borderLeftColor = 'transparent';
         currentSelectedCell.downClue.clueView.style.background = 'none';
@@ -1154,6 +1162,7 @@ function SuggestLettersForCurrentSelectedClue() {
     if (atLeastOneLetterAlready) {
         for (var i=0; i<matches.length; i++) {
             var li = document.createElement('li');
+            li.className = "SuggestedWordItem";
             li.innerHTML = matches[i];
             answerList.appendChild(li);
         }
@@ -1216,6 +1225,7 @@ function GetPossibleSolutionsForClue(clue, limitMatches) {
 }
 
 function ShowCluesWithNoKnownSolution() {
+    return; // TODO: can I use this method when auto fill is used?
     var cluesAndMatches = [];
     for (var i=0; i<puzzle.cluesAcross.length; i++) {
         var [matches, atLeastOneLetterAlready, alreadyAnswered] = GetPossibleSolutionsForClue(puzzle.cluesAcross[i], 1);

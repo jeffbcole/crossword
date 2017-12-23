@@ -290,6 +290,11 @@
     height: calc(70% - 280px);
 }
 
+.SuggestedWordItem {
+    display: inline-block;
+    margin: 2px 5px;
+}
+
 .SelectedWordPatternGridCell {
     display: inline-block;
     width: 30px;
