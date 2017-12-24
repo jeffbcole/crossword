@@ -398,7 +398,33 @@ function OnBoardClick(evt) {
         }
 
         if (currentSelectedCell.isBlack) {
-            SelectNextCell();
+            var curRow = currentSelectedCell.row;
+            var curColumn = currentSelectedCell.column;
+            if (isSelectingAcrossClues) {
+                var found = false;
+                while (curColumn < puzzle.columns-2) {
+                    curColumn++;
+                    if (!puzzle.cells[curRow][curColumn].isBlack) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    SelectCell(puzzle.cells[curRow][curColumn]);
+                }
+            } else {
+                var found = false;
+                while (curRow < puzzle.rows-2) {
+                    curRow++;
+                    if (!puzzle.cells[curRow][curColumn].isBlack) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    SelectCell(puzzle.cells[curRow][curColumn]);
+                }
+            }
         } else {
             SelectCell(currentSelectedCell);
         }
