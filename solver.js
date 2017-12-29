@@ -502,7 +502,6 @@ function GetPossibleExtensionName(buf) {
 
 function SplitBufferAtNulls(buf, desiredParts) {
     var dataView = new DataView(buf);
-=======
     var textDecoder = new TextDecoder('ISO-8859-1');
     var arr = [],
     p = 0,
