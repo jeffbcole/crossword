@@ -21,6 +21,8 @@ function Initialize() {
     }
     
     document.onkeydown = checkKey;
+
+    document.getElementById('OpenPuzzleButton').addEventListener('change', OnOpenPuzzleButtonClick, false);
 }
 
 function MakeTextAreaAutoSizeHeight(element, maxSize) {
@@ -161,6 +163,271 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     if (puzzle.cluesAcross.length > 0) {
         SelectCell(puzzle.cluesAcross[0].startCell);
     }
+}
+
+function OnOpenPuzzleButtonClick(evt) {
+    // Check for the various File API support.
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+        // Great success! All the File APIs are supported.
+        var f = evt.target.files[0];
+        var reader = new FileReader();
+        // Closure to capture the file information.
+        reader.onload = (function(theFile) {
+            return function(e) {
+                // Render thumbnail.
+                var data = e.target.result;
+                ProcessPuzzleFileData(data);
+            };
+        })(f);
+
+      // Read in the puzzle data .
+      reader.readAsArrayBuffer(f);
+
+    } else {
+        alert('The Open File APIs are not fully supported in this browser.');
+    }
+}
+
+function ProcessPuzzleFileData(data) {
+    var textDecoder = new TextDecoder();
+    var dv = new DataView(data);
+    // ********************* HEADER SECTION *********************
+    var header = {};
+    header.checksum = dv.getUint16(0, true);
+    header.fileMagic = textDecoder.decode(data.slice(0x02, 0x02 + 0x0B));
+    header.cibChecksum = dv.getUint16(0x0E, true);
+    //header.maskedLowCheckSums = data.slice(0x10, 0x10 + 0x04).toString('hex');
+    //header.maskedHighCheckSums = data.slice(0x14, 0x14 + 0x04).toString('hex');
+
+    header.version = textDecoder.decode(data.slice(0x18, 0x18 + 0x04));
+    //header.reserved1C = data.slice(0x1C, 0x1C + 0x02).toString('hex');
+    header.scrambledChecksum = dv.getUint16(0x1E, true);
+    //header.reserved20 = data.slice(0x20, 0x20 + 0x0C).toString('hex');
+    header.width = dv.getInt8(0x2C);
+    header.height = dv.getInt8(0x2D);
+    header.scrambled = dv.getInt8(0x32) != 0;
+    header.numberOfClues = dv.getUint16(0x2E, true);
+    header.unknownBitmask = dv.getUint16(0x30, true);
+    header.scambledtag = dv.getUint16(0x32, true);
+    
+    // ********************* PUZZLE LAYOUT AND STATE *********************
+
+    var cells = header.width * header.height;
+    var solutionStart = 0x34;
+    var solutionEnd = solutionStart + cells;
+    var stateStart = solutionStart + cells;
+    var stateEnd = stateStart + cells;
+
+    puzzle = {};
+    puzzle.solution = textDecoder.decode(data.slice(solutionStart, solutionEnd));
+    puzzle.state = textDecoder.decode(data.slice(stateStart, stateEnd));
+    
+    // ********************* STRING SECTION *********************
+
+    var stringStart = stateEnd;
+    var parts = SplitBufferAtNulls(data.slice(stringStart));
+    
+    // *************** Construct the puzzle and view ********
+
+    puzzle.title = parts[0];
+    puzzle.author = parts[1];
+    puzzle.copyright = parts[2];
+    puzzle.cells = [];
+    puzzle.cluesAcross = [];
+    puzzle.cluesDown = [];
+    puzzle.rows = header.height;
+    puzzle.columns = header.width;
+
+    document.getElementById('Title').innerHTML = puzzle.title;
+    
+    var cellsContainer = document.getElementById('BoardCells')
+    cellsContainer.innerHTML = "";
+    var boardGrid = document.getElementById('BoardGrid');
+    boardGrid.innerHTML = "";
+    var acrossCluesContainer = document.getElementById('CluesListAcross');
+    acrossCluesContainer.innerHTML = "";
+    var downCluesContainer = document.getElementById('CluesListDown');
+    downCluesContainer.innerHTML = "";
+    
+    var cellWidth = 495.0/puzzle.rows;
+    var cellHeight = 495.0/puzzle.columns;
+    var cellNumberFontSize = puzzle.rows > 19 ? 7.67 : 10;
+    var cellTextFontSize = puzzle.rows > 19 ? 15.33 : 22;
+    var cellNumberOffsetX = 2;
+    var cellNumberOffsetY = puzzle.rows > 19 ? 8.17 : 11.5;
+    var cellTextOffsetX = puzzle.rows > 19 ?  11.5 : 16;
+    var cellTextOffsetY = puzzle.rows > 19 ? 21.08 : 30.25;
+    var curTop = 3.0;
+    var curLeft = 3.0;
+    var curIndex = 1;
+    for (var i=0; i<puzzle.rows; i++) {
+        curLeft = 3.0;
+        var curRow = [];
+        for (var j=0; j<puzzle.columns; j++) {
+            var cell = {};
+            cell.row = i;
+            cell.column = j;
+            var stateOffset = i*puzzle.columns + j;
+            var solutionValue = puzzle.state[stateOffset];
+            if (solutionValue === '-') {
+                cell.text = '';
+            } else {
+                cell.text = solutionValue;
+            }
+            cell.isBlack = puzzle.solution[stateOffset] === '.';
+            
+            cell.isNumberedCell = false;
+            cell.isAcrossWordStart = false;
+            cell.isDownWordStart = false;
+            if (!cell.isBlack) {
+                if (i===0 || (i > 0 && puzzle.cells[i-1][j].isBlack)) {
+                    cell.isNumberedCell = true;
+                    cell.isDownWordStart = true;
+                }
+                if (j===0 || (j > 0 && curRow[j-1].isBlack)) {
+                    cell.isNumberedCell = true;
+                    cell.isAcrossWordStart = true;
+                }
+            }
+
+            var cellView = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            var cellRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');          
+            cellRect.setAttribute('x', curLeft);
+            cellRect.setAttribute('y', curTop);
+            cellRect.setAttribute('width', cellWidth);
+            cellRect.setAttribute('height', cellHeight);
+            if (cell.isBlack) {
+                cellRect.setAttribute('fill', 'black');
+            } else {
+                cellRect.setAttribute('fill', 'none');
+            }
+            cellView.appendChild(cellRect);
+            var cellText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            cellText.setAttribute('x', curLeft + cellNumberOffsetX);
+            cellText.setAttribute('y', curTop + cellNumberOffsetY);
+            cellText.setAttribute('text-anchor', "start");
+            cellText.setAttribute('font-size', cellNumberFontSize);
+            cellText.innerHTML = cell.isNumberedCell ? curIndex : "";
+            cellView.appendChild(cellText);
+            var cellText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            cellText.setAttribute('x', curLeft + cellTextOffsetX);
+            cellText.setAttribute('y', curTop + cellTextOffsetY);
+            cellText.setAttribute('text-anchor', "middle");
+            cellText.setAttribute('font-size', cellTextFontSize);
+            cellText.innerHTML = cell.text;
+            cellView.appendChild(cellText);
+            cellsContainer.appendChild(cellView);
+
+            cell.cellView = cellView;
+            curRow.push(cell);
+            
+            curLeft = curLeft + cellWidth;
+            if (cell.isNumberedCell) {
+                cell.clueNumber = curIndex;
+                curIndex = curIndex + 1;
+            }
+        }
+        puzzle.cells.push(curRow);
+        curTop = curTop + cellHeight;
+    }
+
+    var boardGridLines = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    boardGridLines.setAttribute('fill', 'none');
+    boardGridLines.setAttribute('vector-effect', "non-scaling-stroke");
+    boardGridLines.setAttribute('stroke', 'dimgray');
+    var pathText = "";
+
+    curLeft = 3.0;
+    curTop = 3.0 + cellHeight;
+    for (var i=0; i<puzzle.rows-1; i++) {
+        pathText = pathText + "M" + curLeft + "," + curTop + " l495.00,0.00";
+        curTop = curTop + cellHeight;
+    }
+    curLeft = 3.0 + cellWidth;
+    curTop = 3.0;
+    for (var i=0; i<puzzle.columns-1; i++) {
+        pathText = pathText + "M" + curLeft + "," + curTop + " l0.0,495.0";
+        curLeft = curLeft + cellWidth;
+    }
+    boardGridLines.setAttribute('d', pathText);
+    boardGrid.appendChild(boardGridLines);
+
+    boardBorder = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    boardBorder.setAttribute('x', 1.5);
+    boardBorder.setAttribute('y', 1.5);
+    boardBorder.setAttribute('width', 498);
+    boardBorder.setAttribute('height', 498);
+    boardBorder.setAttribute('fill', 'none');
+    boardBorder.setAttribute('stroke-width', 3.0);
+    boardBorder.setAttribute('stroke', 'black');
+    boardGrid.appendChild(boardBorder);
+
+    // Fill in the clues
+    var curClueOffset = 3;
+    for (var i=0; i<puzzle.rows; i++) {
+        for (var j=0; j<puzzle.columns; j++) {
+            var cell = puzzle.cells[i][j];
+            if (cell.isAcrossWordStart) {
+                // Find the length of the answer
+                var x = j;
+                var y = i;
+                var answerLength = 0;
+                while (x < puzzle.columns && !puzzle.cells[y][x].isBlack) {
+                    answerLength++;
+                    x++;
+                }
+                var clue = AddClue(true, cell.clueNumber, parts[curClueOffset], cell, answerLength);
+                curClueOffset++;
+                x = j;
+                y = i;
+                while (x < puzzle.columns && !puzzle.cells[y][x].isBlack) {
+                    puzzle.cells[y][x].acrossClue = clue;
+                    x++;
+                }
+            }
+            if (cell.isDownWordStart) {
+                // Find the length of the answer
+                var x = j;
+                var y = i;
+                var answerLength = 0;
+                while (y < puzzle.rows && !puzzle.cells[y][x].isBlack) {
+                    answerLength++;
+                    y++;
+                }
+                var clue = AddClue(false, cell.clueNumber, parts[curClueOffset], cell, answerLength);
+                curClueOffset++;
+                x = j;
+                y = i;
+                while (y < puzzle.rows && !puzzle.cells[y][x].isBlack) {
+                    puzzle.cells[y][x].downClue = clue;
+                    y++;
+                }
+            }
+        }
+    }
+
+    SelectCell(puzzle.cluesAcross[0].startCell);
+}
+
+function SplitBufferAtNulls(buf) {
+    var dataView = new DataView(buf);
+    var textDecoder = new TextDecoder();
+    var arr = [],
+    p = 0,
+    start = 0,
+    length = 0;
+
+    for (var i = 0; i < dataView.byteLength; i++) {
+        var t = dataView.getInt8(i);
+        if ( t === 0) {
+            length = i
+            arr[p] = textDecoder.decode(buf.slice(start, length));
+            p++;
+            start = length + 1;
+        }
+    }
+
+    return arr;
 }
 
 function OnBoardClick(evt) {
@@ -698,11 +965,15 @@ function checkKey(e) {
         }
     }
     else if (e.keyCode >= 65 && e.keyCode <= 90) {
-        var letter = e.key.toUpperCase();
-        currentSelectedCell.cellView.children[2].innerHTML = letter;
-        currentSelectedCell.text = letter;
-        SavePuzzle();
-        SelectNextCell();
+        if (e.metaKey) {
+            // Apple command key was used so we ignore
+        } else {
+            var letter = e.key.toUpperCase();
+            currentSelectedCell.cellView.children[2].innerHTML = letter;
+            currentSelectedCell.text = letter;
+            SavePuzzle();
+            SelectNextCell();
+        }
     }
 }
 
