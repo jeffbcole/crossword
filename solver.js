@@ -411,7 +411,7 @@ function ProcessPuzzleFileData(data) {
 
 function SplitBufferAtNulls(buf) {
     var dataView = new DataView(buf);
-    var textDecoder = new TextDecoder();
+    var textDecoder = new TextDecoder('ISO-8859-1');
     var arr = [],
     p = 0,
     start = 0,
