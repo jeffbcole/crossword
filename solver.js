@@ -75,7 +75,8 @@ function InitializeBoardForPuzzle(savedPuzzle) {
             cell.isNumberedCell = savedPuzzle ? savedPuzzle.cells[i][j].isNumberedCell : false;
             cell.isAcrossWordStart = savedPuzzle ? savedPuzzle.cells[i][j].isAcrossWordStart : false;
             cell.isDownWordStart = savedPuzzle ? savedPuzzle.cells[i][j].isDownWordStart : false;
-    
+            cell.isCircle = savedPuzzle ? savedPuzzle.cells[i][j].isCircle : false;
+
             if (!savedPuzzle) {
                 if (i===0 || (i > 0 && puzzle.cells[i-1][j].isBlack)) {
                     cell.isNumberedCell = true;
@@ -88,7 +89,8 @@ function InitializeBoardForPuzzle(savedPuzzle) {
             }
 
             var cellView = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            var cellRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');          
+            var cellRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect'); 
+            cellRect.setAttribute('id', 'cellRect');         
             cellRect.setAttribute('x', curLeft);
             cellRect.setAttribute('y', curTop);
             cellRect.setAttribute('width', cellWidth);
@@ -99,7 +101,30 @@ function InitializeBoardForPuzzle(savedPuzzle) {
                 cellRect.setAttribute('fill', 'none');
             }
             cellView.appendChild(cellRect);
+            if (cell.isCircle) {
+                if (cell.isNumberedCell) {
+                    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    var radius = cellWidth/2.0;
+                    var data = "M" + curLeft + " " + (curTop+radius) + " a" + radius + " " + radius + " 0 1 0 " + radius + " -" + radius;
+                    circle.setAttribute('d', data);
+                    circle.setAttribute('stroke', 'dimgray');
+                    circle.setAttribute('fill', 'none');
+                    circle.setAttribute('vector-effect', 'non-scaling-stroke');
+                    cellView.appendChild(circle);
+                } else {
+                    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    var radius = cellWidth/2.0;
+                    circle.setAttribute('cx', curLeft + radius);
+                    circle.setAttribute('cy', curTop + radius);
+                    circle.setAttribute('r', radius);
+                    circle.setAttribute('stroke', 'dimgray');
+                    circle.setAttribute('fill', 'none');
+                    circle.setAttribute('vector-effect', 'non-scaling-stroke');
+                    cellView.appendChild(circle);
+                }
+            }
             var cellText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            cellText.setAttribute('id', 'number');
             cellText.setAttribute('x', curLeft + cellNumberOffsetX);
             cellText.setAttribute('y', curTop + cellNumberOffsetY);
             cellText.setAttribute('text-anchor', "start");
@@ -107,6 +132,7 @@ function InitializeBoardForPuzzle(savedPuzzle) {
             cellText.innerHTML = cell.isNumberedCell ? curIndex : "";
             cellView.appendChild(cellText);
             var cellText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            cellText.setAttribute('id', 'text');
             cellText.setAttribute('x', curLeft + cellTextOffsetX);
             cellText.setAttribute('y', curTop + cellTextOffsetY);
             cellText.setAttribute('text-anchor', "middle");
@@ -189,7 +215,7 @@ function OnOpenPuzzleButtonClick(evt) {
 }
 
 function ProcessPuzzleFileData(data) {
-    var textDecoder = new TextDecoder();
+    var textDecoder = new TextDecoder('ISO-8859-1');
     var dv = new DataView(data);
     // ********************* HEADER SECTION *********************
     var header = {};
@@ -225,7 +251,8 @@ function ProcessPuzzleFileData(data) {
     // ********************* STRING SECTION *********************
 
     var stringStart = stateEnd;
-    var parts = SplitBufferAtNulls(data.slice(stringStart));
+    var [parts, cluesLength] = SplitBufferAtNulls(data.slice(stringStart), header.numberOfClues + 3);
+    extensionsStart = cluesLength + stringStart + 1;
     
     // *************** Construct the puzzle and view ********
 
@@ -292,6 +319,7 @@ function ProcessPuzzleFileData(data) {
 
             var cellView = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             var cellRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');          
+            cellRect.setAttribute('id', 'cellRect');         
             cellRect.setAttribute('x', curLeft);
             cellRect.setAttribute('y', curTop);
             cellRect.setAttribute('width', cellWidth);
@@ -303,6 +331,7 @@ function ProcessPuzzleFileData(data) {
             }
             cellView.appendChild(cellRect);
             var cellText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            cellText.setAttribute('id', 'number');
             cellText.setAttribute('x', curLeft + cellNumberOffsetX);
             cellText.setAttribute('y', curTop + cellNumberOffsetY);
             cellText.setAttribute('text-anchor', "start");
@@ -310,6 +339,7 @@ function ProcessPuzzleFileData(data) {
             cellText.innerHTML = cell.isNumberedCell ? curIndex : "";
             cellView.appendChild(cellText);
             var cellText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            cellText.setAttribute('id', 'text');
             cellText.setAttribute('x', curLeft + cellTextOffsetX);
             cellText.setAttribute('y', curTop + cellTextOffsetY);
             cellText.setAttribute('text-anchor', "middle");
@@ -406,12 +436,73 @@ function ProcessPuzzleFileData(data) {
         }
     }
 
+    // Look for extensions
+    while (data.byteLength > extensionsStart) {
+        var [code, length] = GetPossibleExtensionName(data.slice(extensionsStart));
+        if (code.startsWith('GEXT')) {
+            dataView = new DataView(data.slice(extensionsStart));
+            var offset = 8;
+            for (var i=0; i<puzzle.rows; i++) {
+                for (var j=0; j<puzzle.columns; j++) {
+                    var pos = i*puzzle.columns + j + offset;
+                    var isCircle = dataView.getInt8(pos) === -128;
+                    if (isCircle) {
+                        curTop = 3.0 + cellHeight*i;
+                        curLeft = 3.0 + cellWidth*j;
+                        puzzle.cells[i][j].isCircle = true;
+                        var cellView = puzzle.cells[i][j].cellView;
+                        if (cell.isNumberedCell) {
+                            var circle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            var radius = cellWidth/2.0;
+                            var data = "M" + curLeft + " " + (curTop+radius) + " a" + radius + " " + radius + " 0 1 0 " + radius + " -" + radius;
+                            circle.setAttribute('d', data);
+                            circle.setAttribute('stroke', 'dimgray');
+                            circle.setAttribute('fill', 'none');
+                            circle.setAttribute('vector-effect', 'non-scaling-stroke');
+                            cellView.insertBefore(circle, cellView.querySelector('#number'));
+                        } else {
+                            var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            var radius = cellWidth/2.0;
+                            circle.setAttribute('cx', curLeft + radius);
+                            circle.setAttribute('cy', curTop + radius);
+                            circle.setAttribute('r', radius);
+                            circle.setAttribute('stroke', 'dimgray');
+                            circle.setAttribute('fill', 'none');
+                            circle.setAttribute('vector-effect', 'non-scaling-stroke');
+                            cellView.insertBefore(circle, cellView.querySelector('#number'));
+                        }
+                    }
+                }
+            }
+        }
+        extensionsStart = extensionsStart + length + 1;
+    }
+
     SelectCell(puzzle.cluesAcross[0].startCell);
 }
 
-function SplitBufferAtNulls(buf) {
+function GetPossibleExtensionName(buf) {
+    var extensionText = '';
     var dataView = new DataView(buf);
-    var textDecoder = new TextDecoder();
+    p = 0,
+    start = 0,
+    length = 0;
+
+    for (var i = 0; i < buf.byteLength; i++) {
+        var t = dataView.getInt8(i);
+        if ( t === 0) {
+            length = i;
+            var td = new TextDecoder('ISO-8859-1');
+            return [td.decode(buf.slice(start, length)), length];
+        }
+    }
+
+    return "";
+}
+
+function SplitBufferAtNulls(buf, desiredParts) {
+    var dataView = new DataView(buf);
+    var textDecoder = new TextDecoder('ISO-8859-1');
     var arr = [],
     p = 0,
     start = 0,
@@ -424,10 +515,15 @@ function SplitBufferAtNulls(buf) {
             arr[p] = textDecoder.decode(buf.slice(start, length));
             p++;
             start = length + 1;
+
+            if (arr.length === desiredParts) {
+                // We reached the end of the clues so the rest is the extensions
+                return [arr, i];
+            }
         }
     }
 
-    return arr;
+    return [arr, dataView.byteLength];
 }
 
 function OnBoardClick(evt) {
@@ -478,8 +574,8 @@ function GenerateCluesAndCellNumbers(savedPuzzle) {
         for (var j=0; j<puzzle.columns; j++) {
             var cell = puzzle.cells[i][j];
             if (cell.isBlack) {
-                cell.cellView.children[1].innerHTML = "";
-                cell.cellView.children[2].innerHTML = "";
+                cell.cellView.querySelector('#number').innerHTML = "";
+                cell.cellView.querySelector('#text').innerHTML = "";
                 cell.text = "";
                 cell.isNumberedCell = false;
                 cell.isAcrossWordStart = false;
@@ -500,10 +596,10 @@ function GenerateCluesAndCellNumbers(savedPuzzle) {
 
             if (cell.isNumberedCell) {
                 cell.clueNumber = curIndex;
-                cell.cellView.children[1].innerHTML = curIndex;
+                cell.cellView.querySelector('#number').innerHTML = curIndex;
                 curIndex++;
             } else {
-                cell.cellView.children[1].innerHTML = "";
+                cell.cellView.querySelector('#number').innerHTML = "";
             }
         }
     }
@@ -626,14 +722,14 @@ var currentHighlightedCells = [];
 
 function SelectCell(cell) {
     if (currentSelectedCell != undefined) {
-        currentSelectedCell.cellView.children[0].setAttribute('fill', 'none');
+        currentSelectedCell.cellView.querySelector('#cellRect').setAttribute('fill', 'none');
         currentSelectedCell.acrossClue.clueView.style.background = 'none';
         currentSelectedCell.acrossClue.clueView.style.borderLeftColor = 'transparent';
         currentSelectedCell.downClue.clueView.style.background = 'none';
         currentSelectedCell.downClue.clueView.style.borderLeftColor = 'transparent';
         document.getElementById('ClueBarText').innerHTML = "";
         for (var i=0; i<currentHighlightedCells.length; i++) {
-            currentHighlightedCells[i].cellView.children[0].setAttribute("fill", "transparent");
+            currentHighlightedCells[i].cellView.querySelector('#cellRect').setAttribute("fill", "transparent");
         }
     }
 
@@ -643,7 +739,7 @@ function SelectCell(cell) {
         return;
     }
 
-    currentSelectedCell.cellView.children[0].setAttribute('fill', '#ffda00');
+    currentSelectedCell.cellView.querySelector('#cellRect').setAttribute('fill', '#ffda00');
     if (isSelectingAcrossClues) {
         currentSelectedCell.acrossClue.clueView.style.background = '#a7d8ff';
         currentSelectedCell.downClue.clueView.style.borderLeftColor = '#a7d8ff';
@@ -661,7 +757,7 @@ function SelectCell(cell) {
                 curColumn++;
                 continue;
             }
-            curCell.cellView.children[0].setAttribute("fill", "#a7d8ff");
+            curCell.cellView.querySelector('#cellRect').setAttribute("fill", "#a7d8ff");
             currentHighlightedCells.push(curCell);
             curColumn++;
         }
@@ -682,7 +778,7 @@ function SelectCell(cell) {
                 curRow++;
                 continue;
             }
-            curCell.cellView.children[0].setAttribute("fill", "#a7d8ff");
+            curCell.cellView.querySelector('#cellRect').setAttribute("fill", "#a7d8ff");
             currentHighlightedCells.push(curCell);
             curRow++;
         }
@@ -742,7 +838,7 @@ function SelectPreviousCell(clearCell) {
     }
 
     if (clearCell) {
-        puzzle.cells[curRow][curColumn].cellView.children[2].innerHTML = "";
+        puzzle.cells[curRow][curColumn].cellView.querySelector('#text').innerHTML = "";
         puzzle.cells[curRow][curColumn].text = "";
         SavePuzzle();
     }
@@ -947,10 +1043,10 @@ function checkKey(e) {
     else if (e.keyCode == '8' || e.keyCode == '46') {
         // Backspace and Delete
         e.preventDefault();
-        if(currentSelectedCell.cellView.children[2].innerHTML === "") {
+        if(currentSelectedCell.cellView.querySelector('#text').innerHTML === "") {
             SelectPreviousCell(true);
         } else {
-            currentSelectedCell.cellView.children[2].innerHTML = "";
+            currentSelectedCell.cellView.querySelector('#text').innerHTML = "";
             currentSelectedCell.text = "";
             SavePuzzle();
         }
@@ -969,7 +1065,7 @@ function checkKey(e) {
             // Apple command key was used so we ignore
         } else {
             var letter = e.key.toUpperCase();
-            currentSelectedCell.cellView.children[2].innerHTML = letter;
+            currentSelectedCell.cellView.querySelector('#text').innerHTML = letter;
             currentSelectedCell.text = letter;
             SavePuzzle();
             SelectNextCell();
@@ -990,6 +1086,7 @@ function SavePuzzle() {
             var copyCell = puzzle.cells[i][j];
             cell.text =  copyCell.text;
             cell.isBlack = copyCell.isBlack;    
+            cell.isCircle = copyCell.isCircle;
             cell.isNumberedCell = copyCell.isNumberedCell;
             cell.isAcrossWordStart = copyCell.isAcrossWordStart;
             cell.isDownWordStart = copyCell.isDownWordStart;
