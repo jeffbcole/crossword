@@ -17,9 +17,9 @@ function Initialize() {
     var savedPuzzleString = window.localStorage.getItem('CurrentSolverPuzzle');
     if (savedPuzzleString) {
         var savedPuzzle = JSON.parse(savedPuzzleString);
-        InitializeBoardForPuzzle(savedPuzzle, true);
+        InitializeBoardForPuzzle(savedPuzzle);
     } else {
-        InitializeBoardForPuzzle(null, true);        
+        InitializeBoardForPuzzle(null);        
     }
     
     document.onkeydown = checkKey;
@@ -45,7 +45,7 @@ function MakeFocusDetectable(element) {
     }
 }
 
-function InitializeBoardForPuzzle(savedPuzzle, resetSelectedCell) {
+function InitializeBoardForPuzzle(savedPuzzle) {
     puzzle = {};
     puzzle.title = savedPuzzle ? savedPuzzle.title : "Untitled";
     puzzle.cells = [];
@@ -199,8 +199,22 @@ function InitializeBoardForPuzzle(savedPuzzle, resetSelectedCell) {
     boardGrid.appendChild(boardBorder);
 
     GenerateCluesAndCellNumbers(savedPuzzle);
-    if (puzzle.cluesAcross.length > 0 && resetSelectedCell) {
+    if (puzzle.cluesAcross.length > 0) {
         SelectCell(puzzle.cluesAcross[0].startCell);
+    }
+}
+
+function ApplyPuzzleEntries(entries) {
+    var ctr = 0;
+    for (var i=0; i<puzzle.rows; i++) {
+        for (var j=0; j<puzzle.columns; j++) {
+            var data = entries[ctr];
+            ctr++;
+            if (data !== '.') {
+                puzzle.cells[i][j].text = data;
+                puzzle.cells[i][j].cellView.querySelector('#text').innerHTML = data;
+            }
+        }
     }
 }
 
@@ -1096,6 +1110,21 @@ function SavePuzzle() {
 
     var puzzleString = GetPuzzleAsString();
     window.localStorage.setItem('CurrentSolverPuzzle', puzzleString);
+}
+
+function GetPuzzleEntriesAsString() {
+    var str = "";
+    for (var i=0; i<puzzle.rows; i++) {
+        for (var j=0; j<puzzle.columns; j++) {
+            var cell = puzzle.cells[i][j];
+            if (cell.isBlack) {
+                str = str + ".,";
+            } else {
+                str = str + cell.text + ",";
+            }
+        }
+    }
+    return str;
 }
 
 function GetPuzzleAsString() {

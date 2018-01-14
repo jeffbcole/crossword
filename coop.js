@@ -64,7 +64,11 @@ function ReceiveData(data) {
     } else if (data.startsWith('_FULL_STATE:')) {
         var info = data.substring('_FULL_STATE:'.length);
         var fullPuzzle = JSON.parse(info);
-        InitializeBoardForPuzzle(fullPuzzle, false);
+        InitializeBoardForPuzzle(fullPuzzle);
+    } else if (data.startsWith('_ENTRIES:')) {
+        var entriesString = data.substring('_ENTRIES:'.length);
+        var entries = entriesString.split(',');
+        ApplyPuzzleEntries(entries);
     }
 }
 
@@ -78,7 +82,7 @@ function SendPuzzleFullStateToPeer() {
 function SendPuzzleEntries() {
     if (currentConnection != null) {
         // TODO: save bandwith and just send over the cell entries instead of the whole puzzle
-        var puzzleString = GetPuzzleAsString();
-        currentConnection.send('_FULL_STATE:' + puzzleString);
+        var puzzleString = GetPuzzleEntriesAsString();
+        currentConnection.send('_ENTRIES:' + puzzleString);
     }
 }
