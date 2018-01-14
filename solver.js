@@ -11,6 +11,8 @@ function Initialize() {
 
     MakeTextAreaAutoSizeHeight(document.getElementById('ClueBarText'), 200);
 
+    MakeFocusDetectable(document.getElementById('CoopConnectID'));
+
     // Load saved puzzle if it exists
     var savedPuzzleString = window.localStorage.getItem('CurrentSolverPuzzle');
     if (savedPuzzleString) {
@@ -30,6 +32,17 @@ function MakeTextAreaAutoSizeHeight(element, maxSize) {
         element.style.height = "";
         element.style.height = Math.min(element.scrollHeight, maxSize) + "px";
       };
+}
+
+var textEntryIsFocused = false;
+
+function MakeFocusDetectable(element) {
+    element.onfocus = function() {
+        textEntryIsFocused = true;
+    }
+    element.onblur = function() {
+        textEntryIsFocused = false;
+    }
 }
 
 function InitializeBoardForPuzzle(savedPuzzle) {
@@ -941,6 +954,10 @@ function checkKey(e) {
         return;
     }
 
+    if (textEntryIsFocused) {
+        return;
+    }
+    
     // Handle Arrow Keys
     var curRow = currentSelectedCell.row;
     var curColumn = currentSelectedCell.column;
@@ -1074,6 +1091,14 @@ function checkKey(e) {
 }
 
 function SavePuzzle() {
+    // In case we are sharing
+    SendPuzzleEntries();
+
+    var puzzleString = GetPuzzleAsString();
+    window.localStorage.setItem('CurrentSolverPuzzle', puzzleString);
+}
+
+function GetPuzzleAsString() {
     var savePuzzle = {};
     savePuzzle.title = puzzle.title;
     savePuzzle.rows = puzzle.rows;
@@ -1116,5 +1141,5 @@ function SavePuzzle() {
         savePuzzle.cluesDown.push(clue);
     }
 
-    window.localStorage.setItem('CurrentSolverPuzzle', JSON.stringify(savePuzzle));
+    return JSON.stringify(savePuzzle);
 }

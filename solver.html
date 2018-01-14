@@ -16,13 +16,28 @@
 		};
 	</script>
 
+    <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
     <script type="text/javascript" src="solver.js"></script>
+    <script type="text/javascript" src="coop.js"></script>
 </head>
 
 <body>
 
-    <input type="file" name="file" id="OpenPuzzleButton" accept=".puz,.json"/>
-    <label for="OpenPuzzleButton">Open A Puzzle</label>
+    <div id="CoOpHeader">
+        <div id="CoOpStatusText">Share id: </div>
+    </div>
+
+    <div id="ButtonsRegion">
+        <input type="text" name="CoopConnectID" id="CoopConnectID"/>
+        <label for="CoopConnectID">Peer Puzzle ID</label>
+        <button id="CoopConnectButton" class="CoOpButton" onclick="JoinPuzzle()">Join</button>
+ 
+        <button  name="CoOpShareButton" class="CoOpButton" onclick="SharePuzzle()">Share</button>
+        
+        <input type="file" name="file" id="OpenPuzzleButton" accept=".puz,.json"/>
+        <label for="OpenPuzzleButton">Open</label>
+ 
+    </div>
 
     <div class="TitleInfo">
         <div class="Title" id="Title"></div>

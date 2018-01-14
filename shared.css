@@ -11,6 +11,7 @@
     border: none;
     width: 100%;
     text-align: center;
+    margin-top: 25px;
 }
 
 .PuzzleLayout {
@@ -24,6 +25,7 @@
     -ms-flex-pack: distribute;
     justify-content: space-around;
     margin: auto;
+    margin-top: 20px;
     max-width: 1132px;
     padding: 10px;
     display: -webkit-box;
