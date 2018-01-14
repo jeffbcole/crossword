@@ -65,8 +65,8 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     var downCluesContainer = document.getElementById('CluesListDown');
     downCluesContainer.innerHTML = "";
     
-    var cellWidth = 495.0/puzzle.rows;
-    var cellHeight = 495.0/puzzle.columns;
+    var cellWidth = 495.0/puzzle.columns;
+    var cellHeight = 495.0/puzzle.rows;
     var cellNumberFontSize = puzzle.rows > 19 ? 7.67 : 10;
     var cellTextFontSize = puzzle.rows > 19 ? 15.33 : 22;
     var cellNumberOffsetX = 2;
