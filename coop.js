@@ -64,7 +64,7 @@ function ReceiveData(data) {
     } else if (data.startsWith('_FULL_STATE:')) {
         var info = data.substring('_FULL_STATE:'.length);
         var fullPuzzle = JSON.parse(info);
-        InitializeBoardForPuzzle(fullPuzzle);
+        InitializeBoardForPuzzle(fullPuzzle, false);
     }
 }
 

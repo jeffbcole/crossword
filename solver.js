@@ -17,9 +17,9 @@ function Initialize() {
     var savedPuzzleString = window.localStorage.getItem('CurrentSolverPuzzle');
     if (savedPuzzleString) {
         var savedPuzzle = JSON.parse(savedPuzzleString);
-        InitializeBoardForPuzzle(savedPuzzle);
+        InitializeBoardForPuzzle(savedPuzzle, true);
     } else {
-        InitializeBoardForPuzzle(null);        
+        InitializeBoardForPuzzle(null, true);        
     }
     
     document.onkeydown = checkKey;
@@ -45,7 +45,7 @@ function MakeFocusDetectable(element) {
     }
 }
 
-function InitializeBoardForPuzzle(savedPuzzle) {
+function InitializeBoardForPuzzle(savedPuzzle, resetSelectedCell) {
     puzzle = {};
     puzzle.title = savedPuzzle ? savedPuzzle.title : "Untitled";
     puzzle.cells = [];
@@ -199,7 +199,7 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     boardGrid.appendChild(boardBorder);
 
     GenerateCluesAndCellNumbers(savedPuzzle);
-    if (puzzle.cluesAcross.length > 0) {
+    if (puzzle.cluesAcross.length > 0 && resetSelectedCell) {
         SelectCell(puzzle.cluesAcross[0].startCell);
     }
 }
