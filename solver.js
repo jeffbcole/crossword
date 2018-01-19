@@ -22,6 +22,10 @@ function Initialize() {
         InitializeBoardForPuzzle(null);        
     }
     
+    if (puzzle.cluesAcross.length > 0) {
+        SelectCell(puzzle.cluesAcross[0].startCell);
+    }
+    
     document.onkeydown = checkKey;
 
     document.getElementById('OpenPuzzleButton').addEventListener('change', OnOpenPuzzleButtonClick, false);
@@ -199,9 +203,6 @@ function InitializeBoardForPuzzle(savedPuzzle) {
     boardGrid.appendChild(boardBorder);
 
     GenerateCluesAndCellNumbers(savedPuzzle);
-    if (puzzle.cluesAcross.length > 0) {
-        SelectCell(puzzle.cluesAcross[0].startCell);
-    }
 }
 
 function ApplyPuzzleEntries(entries) {

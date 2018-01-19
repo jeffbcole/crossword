@@ -24,10 +24,12 @@ function SharePuzzle()
         currentConnection = c;
         connectedPeers[c.peer] = 1;
         console.log("Connection received from " + c.peer);
+        document.getElementById('CoOpHeader').style.background = "green";
         if (c.label === 'chat') {
             c.on('data', ReceiveData);
             c.on('close', function() {
-                alert(c.peer + ' has left the puzzle.');
+                //alert(c.peer + ' has left the puzzle.');
+                document.getElementById('CoOpHeader').style.background = "pink";
                 delete connectedPeers[c.peer];
             });
         }
@@ -53,6 +55,11 @@ function JoinPuzzle() {
         
         currentConnection.on('error', function(err) { alert(err); });
         
+        currentConnection.on('close', function() {
+            // This was not on purpose then reconnect
+            JoinPuzzle();
+        });
+
         // Request the full state of the puzzle
         currentConnection.send('_SEND_FULL_STATE');
     });
@@ -65,6 +72,10 @@ function ReceiveData(data) {
         var info = data.substring('_FULL_STATE:'.length);
         var fullPuzzle = JSON.parse(info);
         InitializeBoardForPuzzle(fullPuzzle);
+        if (currentSelectedCell !== undefined) {
+            currentSelectedCell = puzzle.cells[currentSelectedCell.row][currentSelectedCell.column];
+        }
+        SelectCell(currentSelectedCell);
     } else if (data.startsWith('_ENTRIES:')) {
         var entriesString = data.substring('_ENTRIES:'.length);
         var entries = entriesString.split(',');
