@@ -129,7 +129,24 @@
 #ButtonsRegion {
     position: absolute;
     right: 10px;
-    top: 60px;
+    top: 10px;
+}
+
+#CoopConnectID {
+    display: block;
+    width: 115px;
+    margin-bottom: 5px;
+    margin-left: 70px;
+}
+
+#CoopConnectIDLabel {
+    text-align: center;
+    width: 120px;
+    background: lightblue;
+    display: block;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    margin-left: 70px;
 }
 
 .CoOpButton {

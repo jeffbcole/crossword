@@ -28,14 +28,15 @@
     </div>
 
     <div id="ButtonsRegion">
+        <label id="CoopConnectIDLabel" for="CoopConnectID">Peer Puzzle ID</label>
         <input type="text" name="CoopConnectID" id="CoopConnectID"/>
-        <label for="CoopConnectID">Peer Puzzle ID</label>
-        <button id="CoopConnectButton" class="CoOpButton" onclick="JoinPuzzle()">Join</button>
- 
-        <button  name="CoOpShareButton" class="CoOpButton" onclick="SharePuzzle()">Share</button>
-        
+
         <input type="file" name="file" id="OpenPuzzleButton" accept=".puz,.json"/>
         <label for="OpenPuzzleButton">Open</label>
+        
+        <button id="CoopConnectButton" class="CoOpButton" onclick="JoinPuzzle()">Join</button>
+        <button  name="CoOpShareButton" class="CoOpButton" onclick="SharePuzzle()">Share</button>
+        
  
     </div>
 
